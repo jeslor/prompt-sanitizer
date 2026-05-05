@@ -1,0 +1,50 @@
+{
+  "name": "prompt-sanitizer",
+  "version": "0.1.0",
+  "description": "Lightweight, tiered, bidirectional PII sanitizer for LLM pipelines",
+  "keywords": ["pii", "llm", "privacy", "sanitizer", "redaction", "openai", "langchain"],
+  "author": "Jeslor Ssozi",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./integrations/openai": {
+      "import": "./dist/integrations/openai.js",
+      "require": "./dist/integrations/openai.cjs",
+      "types": "./dist/integrations/openai.d.ts"
+    },
+    "./integrations/vercel-ai": {
+      "import": "./dist/integrations/vercel-ai.js",
+      "require": "./dist/integrations/vercel-ai.cjs",
+      "types": "./dist/integrations/vercel-ai.d.ts"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests"
+  },
+  "dependencies": {},
+  "optionalDependencies": {
+    "@faker-js/faker": "^9.0.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
