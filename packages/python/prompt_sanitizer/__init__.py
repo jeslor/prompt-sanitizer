@@ -47,4 +47,11 @@ __all__ = [
     "MemoryAuditLog",
     "SQLiteAuditLog",
     "AuditEvent",
+    # integrations (imported lazily — only available when extras installed)
+    "openai_wrapper",
+    "langchain_integration",
+    "fastapi_middleware",
+    "django_middleware",
+    "llamaindex_integration",
 ]
+
