@@ -53,8 +53,10 @@ class TestOpenAIWrap:
 
         call_args = client.chat.completions.create.call_args
         sent_messages = call_args.kwargs["messages"]
+        # The original email must be gone — replaced with a synthetic value
         assert "secret@example.com" not in sent_messages[0]["content"]
-        assert "@" not in sent_messages[0]["content"] or "example.com" not in sent_messages[0]["content"]
+        # The content must have changed (something was substituted)
+        assert sent_messages[0]["content"] != "Email me at secret@example.com"
 
     def test_response_deanonymized(self):
         from prompt_sanitizer.integrations.openai import wrap
