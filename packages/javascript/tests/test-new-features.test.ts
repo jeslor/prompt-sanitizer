@@ -242,40 +242,37 @@ describe("wrap() — OpenAI integration", () => {
 
   it("handles streaming mode", async () => {
     const email = "carol@example.com";
-
-    async function* fakeStream() {
-      yield { choices: [{ delta: { content: "Contact " } }] };
-      yield { choices: [{ delta: { content: email } }] };
-      yield { choices: [{ delta: { content: " for help." } }] };
-    }
-
-    // We need to first anonymize so the vault has a mapping
-    const s = new Sanitizer();
-    const sess = s.session();
-    const anonymized = await sess.anonymize(`Contact ${email} for help.`);
-
-    // Simulate the LLM echoing back the anonymized text as a stream
-    const anonymizedChunks = anonymized.split(" ");
-    async function* anonymizedStream() {
-      for (const chunk of anonymizedChunks) {
-        yield { choices: [{ delta: { content: chunk + " " } }] };
-      }
-    }
+    let capturedContent = "";
 
     const mockClient = {
       chat: {
         completions: {
-          create: vi.fn(async () => anonymizedStream()),
+          create: vi.fn(async (params: Record<string, unknown>) => {
+            // Capture the anonymized content the wrapper sends us
+            const msgs = params.messages as Array<{ content: string }>;
+            capturedContent = msgs[msgs.length - 1]?.content ?? "";
+
+            // Echo back word-by-word so deanonymization can work
+            const words = capturedContent.split(" ");
+            async function* streamGen() {
+              for (const word of words) {
+                yield { choices: [{ delta: { content: word + " " } }] };
+              }
+            }
+            return streamGen();
+          }),
         },
       },
     };
 
+    const s = new Sanitizer();
     const client = wrap(mockClient as never, s);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clientAny = client as any;
+
     const stream = await clientAny.chat.completions.create({
       model: "gpt-4o",
-      messages: [{ role: "user", content: anonymized }],
+      messages: [{ role: "user", content: `Contact ${email} for help.` }],
       stream: true,
     }) as AsyncIterable<{ choices: Array<{ delta: { content: string } }> }>;
 
@@ -284,6 +281,9 @@ describe("wrap() — OpenAI integration", () => {
       accumulated += chunk.choices[0]?.delta?.content ?? "";
     }
 
+    // Wrapper should deanonymize the stream, restoring the original email
     expect(accumulated).toContain(email);
+    // The mock should have received anonymized content (not the real email)
+    expect(capturedContent).not.toContain(email);
   });
 });

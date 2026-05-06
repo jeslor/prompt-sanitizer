@@ -28,4 +28,5 @@ export enum EntityType {
   DATABASE_URL = "DATABASE_URL",
   AWS_KEY = "AWS_KEY",
   OAUTH_TOKEN = "OAUTH_TOKEN",
+  CUSTOM = "CUSTOM",
 }
