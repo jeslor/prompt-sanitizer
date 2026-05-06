@@ -138,3 +138,77 @@ class TestMultiplePII:
         assert "user@example.com" not in result.text
         assert "123-45-6789" not in result.text
         assert len(result.entities) >= 2
+
+
+# ── stream() ──────────────────────────────────────────────────────────────────
+
+class TestStream:
+    @pytest.mark.asyncio
+    async def test_stream_plain_strings(self, s):
+        """Plain string async iterables are deanonymized correctly."""
+        sess = s.session()
+        anonymized = sess.anonymize("Email alice@example.com for info.")
+
+        async def source():
+            for chunk in anonymized.split():
+                yield chunk + " "
+
+        output = ""
+        async for chunk in s.stream(source(), session=sess):
+            output += chunk
+
+        assert "alice@example.com" in output
+
+    @pytest.mark.asyncio
+    async def test_stream_without_session_passthrough(self, s):
+        """Without a session, stream passes text through unchanged."""
+        async def source():
+            yield "Hello world"
+            yield " no pii here"
+
+        output = ""
+        async for chunk in s.stream(source()):
+            output += chunk
+
+        assert output == "Hello world no pii here"
+
+    @pytest.mark.asyncio
+    async def test_stream_openai_style_chunks(self, s):
+        """Accepts objects with choices[0].delta.content attribute."""
+        from types import SimpleNamespace
+
+        sess = s.session()
+        anonymized = sess.anonymize("Call Bob at 555-867-5309")
+
+        def make_chunk(text):
+            delta = SimpleNamespace(content=text)
+            choice = SimpleNamespace(delta=delta)
+            return SimpleNamespace(choices=[choice])
+
+        async def source():
+            # Yield word-by-word (realistic LLM streaming)
+            for word in anonymized.split():
+                yield make_chunk(word + " ")
+
+        output = ""
+        async for chunk in s.stream(source(), session=sess):
+            output += chunk
+
+        assert "555-867-5309" in output
+
+    @pytest.mark.asyncio
+    async def test_stream_partial_token_buffering(self, s):
+        """[TOKEN_N] vault tokens split across chunks are buffered and reassembled."""
+        sess = s.session()
+        # Directly inject a bracket-style token to avoid faker variability
+        sess._vault.add("original@example.com", "[EMAIL_99]")
+
+        async def source():
+            yield "[EMAIL"
+            yield "_99] and more text"
+
+        output = ""
+        async for chunk in s.stream(source(), session=sess):
+            output += chunk
+
+        assert "original@example.com" in output

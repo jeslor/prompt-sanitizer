@@ -211,11 +211,13 @@ describe("wrap() — OpenAI integration", () => {
 
     const s = new Sanitizer();
     const client = wrap(mockClient as never, s);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clientAny = client as any;
 
-    const response = await (client as {chat: {completions: {create: (p: unknown) => Promise<{choices: Array<{message: {content: string}}>}>}}}).chat.completions.create({
+    const response = await clientAny.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: "My email is alice@example.com" }],
-    });
+    }) as { choices: Array<{ message: { content: string } }> };
 
     // The message sent to OpenAI should NOT contain the real email
     const sentContent = (capturedMessages[0] as { content: string }).content;
@@ -269,14 +271,16 @@ describe("wrap() — OpenAI integration", () => {
     };
 
     const client = wrap(mockClient as never, s);
-    const stream = await (client as {chat: {completions: {create: (p: unknown) => Promise<AsyncIterable<{choices: Array<{delta: {content: string}}>}>}>}}).chat.completions.create({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clientAny = client as any;
+    const stream = await clientAny.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: anonymized }],
       stream: true,
-    });
+    }) as AsyncIterable<{ choices: Array<{ delta: { content: string } }> }>;
 
     let accumulated = "";
-    for await (const chunk of stream as AsyncIterable<{choices: Array<{delta: {content: string}}> }>) {
+    for await (const chunk of stream) {
       accumulated += chunk.choices[0]?.delta?.content ?? "";
     }
 
