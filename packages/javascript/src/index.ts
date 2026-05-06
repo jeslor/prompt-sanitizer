@@ -19,7 +19,7 @@
  */
 
 export { Sanitizer } from "./sanitizer.js";
-export type { SanitizerOptions, OnDetect } from "./sanitizer.js";
+export type { SanitizerOptions, OnDetect, AddEntityOptions } from "./sanitizer.js";
 
 export { Session } from "./session.js";
 export { Vault } from "./vault.js";
@@ -29,5 +29,7 @@ export { PIIDetectedError, MissingDependencyError } from "./exceptions.js";
 export { SyntheticEngine } from "./synthetic.js";
 export { RegexEngine } from "./engines/regex-engine.js";
 export { SecretsEngine } from "./engines/secrets-engine.js";
+export { AuditLog } from "./audit.js";
+export type { AuditEvent, ExportOptions } from "./audit.js";
 
 export type { SanitizeResult, DetectedEntity } from "./result.js";

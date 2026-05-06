@@ -12,15 +12,25 @@ import { SyntheticEngine } from "./synthetic.js";
 import { Vault } from "./vault.js";
 import { Mode } from "./modes.js";
 import { Session } from "./session.js";
+import { AuditLog, _hashValue, _nowIso } from "./audit.js";
 import type { DetectedEntity, SanitizeResult } from "./result.js";
 
 export type OnDetect = "redact" | "warn" | "block";
+
+export interface AddEntityOptions {
+  /** Detection confidence (0–1). Default: 0.85. */
+  confidence?: number;
+  /** Optional validator function called after regex match. */
+  validator?: (match: string) => boolean;
+}
 
 export interface SanitizerOptions {
   mode?: Mode;
   locale?: string;
   entities?: EntityType[];
   onDetect?: OnDetect;
+  /** Provide a custom AuditLog, or pass `true` to use a default MemoryAuditLog. */
+  auditLog?: AuditLog | boolean;
 }
 
 // ── Span deduplication ────────────────────────────────────────────────────────
@@ -67,6 +77,7 @@ export class Sanitizer {
   private readonly _regexEngine: RegexEngine;
   private readonly _secretsEngine: SecretsEngine;
   private readonly _syntheticEngine: SyntheticEngine;
+  private readonly _audit: AuditLog | null;
 
   constructor(options: SanitizerOptions = {}) {
     this._mode = options.mode ?? Mode.FAST;
@@ -75,9 +86,36 @@ export class Sanitizer {
     this._regexEngine = new RegexEngine();
     this._secretsEngine = new SecretsEngine();
     this._syntheticEngine = new SyntheticEngine();
+
+    if (options.auditLog instanceof AuditLog) {
+      this._audit = options.auditLog;
+    } else if (options.auditLog === true || this._mode === Mode.FULL) {
+      this._audit = new AuditLog();
+    } else {
+      this._audit = null;
+    }
   }
 
   // ── Public API ──────────────────────────────────────────────────────────────
+
+  /** Access the audit log (available when mode=FULL or auditLog was supplied). */
+  get audit(): AuditLog | null {
+    return this._audit;
+  }
+
+  /**
+   * Register a custom entity type with a regex pattern.
+   *
+   * @example
+   * ```ts
+   * sanitizer.addEntity("EMPLOYEE_ID", /EMP-\d{6}/g, { confidence: 0.95 });
+   * ```
+   */
+  addEntity(name: string, pattern: RegExp, options: AddEntityOptions = {}): void {
+    const { confidence = 0.85, validator } = options;
+    // Use CUSTOM entity type; the pattern is stored against it
+    this._regexEngine.addPattern(EntityType.CUSTOM, pattern, confidence, validator);
+  }
 
   /** Sanitize a string, returning a {@link SanitizeResult}. */
   async sanitize(text: string): Promise<SanitizeResult> {
@@ -189,6 +227,22 @@ export class Sanitizer {
       }
       tokens[entity.value] = replacement;
       result = result.slice(0, entity.start) + replacement + result.slice(entity.end);
+    }
+
+    // Record audit events
+    if (this._audit) {
+      for (const entity of entities) {
+        const replacement = tokens[entity.value] ?? "";
+        this._audit.record({
+          timestamp: _nowIso(),
+          entityType: entity.entityType,
+          confidence: entity.confidence,
+          layer: entity.layer,
+          redactionMethod: replacement.startsWith("[") ? "placeholder" : "synthetic",
+          valueHash: _hashValue(entity.value),
+          sessionId: _sessionId,
+        });
+      }
     }
 
     return { text: result, original: text, entities, tokens, score };

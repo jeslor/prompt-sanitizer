@@ -6,7 +6,8 @@ synthetic replacement, vault, and audit log.
 """
 from __future__ import annotations
 
-from typing import Callable
+import re
+from typing import AsyncGenerator, AsyncIterable, Callable
 
 from .audit import AuditEvent, BaseAuditLog, MemoryAuditLog, _hash_value, _now_iso
 from .engines.ner_engine import NEREngine
@@ -175,6 +176,75 @@ class Sanitizer:
             pattern or r".+",
             confidence=confidence,
         )
+
+    async def stream(
+        self,
+        source: AsyncIterable,
+        session: "Session | None" = None,
+    ) -> AsyncGenerator[str, None]:
+        """
+        Wrap an async LLM output stream, deanonymizing each chunk as it arrives.
+
+        Use this after ``session.anonymize()`` to restore PII in streaming
+        responses from OpenAI, Anthropic, or any compatible SDK.
+
+        Parameters
+        ----------
+        source:
+            An async iterable of OpenAI-style chunks.  Each chunk should have
+            a ``choices[0].delta.content`` attribute, or be a plain string.
+        session:
+            A :class:`Session` whose vault holds the anonymization mapping.
+            If ``None``, the stream is passed through without deanonymization.
+
+        Example::
+
+            sess = s.session()
+            clean = sess.anonymize(user_message)
+
+            response = await openai.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": clean}],
+                stream=True,
+            )
+
+            async for chunk in s.stream(response, session=sess):
+                print(chunk, end="", flush=True)
+        """
+        # Partial-token regex: catches vault tokens split across chunk boundaries
+        _PARTIAL = re.compile(r"\[[A-Z_]+(?:_\d+)?$|\[[A-Z_]*$")
+        buffer = ""
+
+        async for chunk in source:
+            # Accept both plain strings and OpenAI-style chunk objects
+            if isinstance(chunk, str):
+                text = chunk
+            else:
+                choices = getattr(chunk, "choices", None) or []
+                delta = choices[0].delta if choices else None
+                text = getattr(delta, "content", None) if delta else None
+                if text is None:
+                    # Non-text chunk (metadata, finish reason, etc.) — skip
+                    continue
+
+            buffer += text
+
+            # Flush everything up to the start of a possible partial token
+            partial_match = _PARTIAL.search(buffer)
+            flush_up_to = partial_match.start() if partial_match else len(buffer)
+
+            if flush_up_to > 0:
+                to_flush = buffer[:flush_up_to]
+                buffer = buffer[flush_up_to:]
+                if session is not None:
+                    to_flush = session.deanonymize(to_flush)
+                yield to_flush
+
+        # Flush remaining buffer
+        if buffer:
+            if session is not None:
+                buffer = session.deanonymize(buffer)
+            yield buffer
 
     def guard(
         self,
