@@ -149,7 +149,7 @@ export class RegexEngine {
     confidence = 0.75,
     validator?: (match: string) => boolean
   ): void {
-    this._patterns.push({ entityType, regex, confidence, validator });
+    this._patterns.push({ entityType, regex, confidence, ...(validator !== undefined ? { validator } : {}) });
   }
 
   /** Detect all PII entities in ``text``. */

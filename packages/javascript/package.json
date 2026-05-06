@@ -2,7 +2,15 @@
   "name": "prompt-sanitizer",
   "version": "0.1.0",
   "description": "Lightweight, tiered, bidirectional PII sanitizer for LLM pipelines",
-  "keywords": ["pii", "llm", "privacy", "sanitizer", "redaction", "openai", "langchain"],
+  "keywords": [
+    "pii",
+    "llm",
+    "privacy",
+    "sanitizer",
+    "redaction",
+    "openai",
+    "langchain"
+  ],
   "author": "Jeslor Ssozi",
   "license": "MIT",
   "type": "module",
@@ -41,7 +49,10 @@
       "types": "./dist/integrations/llamaindex.d.ts"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "test": "vitest run",
@@ -49,12 +60,21 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src tests"
   },
-  "dependencies": {},
   "optionalDependencies": {
-    "@faker-js/faker": "^9.0.0"
+    "@faker-js/faker": "^9.0.0",
+    "@huggingface/transformers": "^3.0.0"
+  },
+  "peerDependencies": {
+    "@huggingface/transformers": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@huggingface/transformers": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@faker-js/faker": "^9.0.0",
+    "@huggingface/transformers": "^4.2.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0"

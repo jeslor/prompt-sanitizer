@@ -8,6 +8,7 @@ import { EntityType } from "./entities.js";
 import { PIIDetectedError } from "./exceptions.js";
 import { RegexEngine } from "./engines/regex-engine.js";
 import { SecretsEngine } from "./engines/secrets-engine.js";
+import { NerEngine } from "./engines/ner-engine.js";
 import { SyntheticEngine } from "./synthetic.js";
 import { Vault } from "./vault.js";
 import { Mode } from "./modes.js";
@@ -31,6 +32,10 @@ export interface SanitizerOptions {
   onDetect?: OnDetect;
   /** Provide a custom AuditLog, or pass `true` to use a default MemoryAuditLog. */
   auditLog?: AuditLog | boolean;
+  /** Override the NER model used in Mode.SMART / Mode.FULL. */
+  nerModel?: string;
+  /** If true, silently skip NER when @huggingface/transformers is not installed. Default: true. */
+  nerSilent?: boolean;
 }
 
 // ── Span deduplication ────────────────────────────────────────────────────────
@@ -76,6 +81,7 @@ export class Sanitizer {
   private readonly _onDetect: OnDetect;
   private readonly _regexEngine: RegexEngine;
   private readonly _secretsEngine: SecretsEngine;
+  private readonly _nerEngine: NerEngine | null;
   private readonly _syntheticEngine: SyntheticEngine;
   private readonly _audit: AuditLog | null;
 
@@ -86,6 +92,16 @@ export class Sanitizer {
     this._regexEngine = new RegexEngine();
     this._secretsEngine = new SecretsEngine();
     this._syntheticEngine = new SyntheticEngine();
+
+    // NER engine is only created for SMART / FULL modes
+    if (this._mode === Mode.SMART || this._mode === Mode.FULL) {
+      this._nerEngine = new NerEngine({
+        ...(options.nerModel !== undefined ? { model: options.nerModel } : {}),
+        silent: options.nerSilent ?? true,
+      });
+    } else {
+      this._nerEngine = null;
+    }
 
     if (options.auditLog instanceof AuditLog) {
       this._audit = options.auditLog;
@@ -101,6 +117,16 @@ export class Sanitizer {
   /** Access the audit log (available when mode=FULL or auditLog was supplied). */
   get audit(): AuditLog | null {
     return this._audit;
+  }
+
+  /** Access the NER engine (available when mode=SMART or FULL). */
+  get ner(): NerEngine | null {
+    return this._nerEngine;
+  }
+
+  /** Release the NER model from memory. */
+  async dispose(): Promise<void> {
+    await this._nerEngine?.dispose();
   }
 
   /**
@@ -188,6 +214,12 @@ export class Sanitizer {
       ...this._secretsEngine.detect(text),
     ];
 
+    // Layer 2: NER (Mode.SMART / Mode.FULL)
+    if (this._nerEngine) {
+      const nerEntities = await this._nerEngine.detect(text);
+      entities = [...entities, ...nerEntities];
+    }
+
     // Filter to requested entity types
     if (this._entities) {
       entities = entities.filter((e) => this._entities!.has(e.entityType));
@@ -233,15 +265,16 @@ export class Sanitizer {
     if (this._audit) {
       for (const entity of entities) {
         const replacement = tokens[entity.value] ?? "";
-        this._audit.record({
+        const event: import("./audit.js").AuditEvent = {
           timestamp: _nowIso(),
           entityType: entity.entityType,
           confidence: entity.confidence,
           layer: entity.layer,
           redactionMethod: replacement.startsWith("[") ? "placeholder" : "synthetic",
           valueHash: _hashValue(entity.value),
-          sessionId: _sessionId,
-        });
+        };
+        if (_sessionId !== undefined) event.sessionId = _sessionId;
+        this._audit.record(event);
       }
     }
 

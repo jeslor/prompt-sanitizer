@@ -6,6 +6,15 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
+
+// Mock @huggingface/transformers so Mode.FULL tests don't trigger real model downloads
+vi.mock("@huggingface/transformers", () => ({
+  pipeline: vi.fn().mockResolvedValue(
+    Object.assign(vi.fn().mockResolvedValue([]), { dispose: vi.fn() })
+  ),
+  env: { useBrowserCache: true },
+}));
+
 import { AuditLog } from "../src/audit.js";
 import { Sanitizer } from "../src/sanitizer.js";
 import { Mode } from "../src/modes.js";

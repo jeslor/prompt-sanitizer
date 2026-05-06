@@ -29,6 +29,8 @@ export { PIIDetectedError, MissingDependencyError } from "./exceptions.js";
 export { SyntheticEngine } from "./synthetic.js";
 export { RegexEngine } from "./engines/regex-engine.js";
 export { SecretsEngine } from "./engines/secrets-engine.js";
+export { NerEngine, DEFAULT_NER_MODEL } from "./engines/ner-engine.js";
+export type { NerEngineOptions } from "./engines/ner-engine.js";
 export { AuditLog } from "./audit.js";
 export type { AuditEvent, ExportOptions } from "./audit.js";
 
