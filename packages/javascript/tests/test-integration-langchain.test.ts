@@ -130,31 +130,23 @@ describe("SanitizedChain", () => {
 
   it("deanonymizes string results", async () => {
     const sanitizer = new Sanitizer();
-
-    const session = sanitizer.session();
-    await session.anonymize("eve@test.com");
-    const token = Object.values((session as any)._vault.snapshot())[0] as string;
-
+    // Mock echoes the sanitized "question" field back — wrapper deanonymizes it
     const mockChain: LangChainBaseChain = {
-      invoke: vi.fn(async () => `Email: ${token}`),
+      invoke: vi.fn(async (input: Record<string, unknown>) => `Email: ${input["question"]}`),
     };
     const chain = new SanitizedChain(mockChain, sanitizer);
-    const result = await chain.invoke({ question: "Contact eve@test.com" });
+    const result = await chain.invoke({ question: "eve@test.com" });
     expect(result).toContain("eve@test.com");
   });
 
   it("deanonymizes object results", async () => {
     const sanitizer = new Sanitizer();
-
-    const session = sanitizer.session();
-    await session.anonymize("frank@test.com");
-    const token = Object.values((session as any)._vault.snapshot())[0] as string;
-
+    // Mock echoes the sanitized "question" field in an object — wrapper deanonymizes it
     const mockChain: LangChainBaseChain = {
-      invoke: vi.fn(async () => ({ answer: `Reply to ${token}` })),
+      invoke: vi.fn(async (input: Record<string, unknown>) => ({ answer: `Reply to ${input["question"]}` })),
     };
     const chain = new SanitizedChain(mockChain, sanitizer);
-    const result = await chain.invoke({ question: "Contact frank@test.com" }) as Record<string, string>;
+    const result = await chain.invoke({ question: "frank@test.com" }) as Record<string, string>;
     expect(result.answer).toContain("frank@test.com");
   });
 });

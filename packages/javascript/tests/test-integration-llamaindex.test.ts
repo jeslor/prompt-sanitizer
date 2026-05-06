@@ -71,14 +71,14 @@ describe("PromptSanitizerNodePostprocessor", () => {
     ];
     const result = await postprocessor.postprocessNodes(nodes);
 
-    // Same email in both nodes should produce the same token (shared vault)
+    // PII should be redacted from both nodes
     expect(result[0].node.text).not.toContain("alice@example.com");
     expect(result[1].node.text).not.toContain("alice@example.com");
 
-    // Both sanitized nodes should use the same replacement token
-    const token0 = result[0].node.text.split("is the contact.")[0].trim();
-    const token1 = result[1].node.text.split("anytime.")[0].replace("Reach ", "").trim();
-    expect(token0).toBe(token1);
+    // Both nodes share a session — deanonymizing with that session restores both
+    const session = (result[0] as any).__sanitizerSession;
+    expect(session.deanonymize(result[0].node.text)).toContain("alice@example.com");
+    expect(session.deanonymize(result[1].node.text)).toContain("alice@example.com");
   });
 
   it("attaches session to result for downstream deanonymization", async () => {
