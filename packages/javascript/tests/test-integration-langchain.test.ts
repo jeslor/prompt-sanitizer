@@ -68,16 +68,13 @@ describe("SanitizedLLM", () => {
 
   it("deanonymizes the LLM response", async () => {
     const sanitizer = new Sanitizer();
-
-    // Pre-populate vault to know the token
-    const session = sanitizer.session();
-    await session.anonymize("dan@example.com");
-    const token = Object.values((session as any)._vault.snapshot())[0] as string;
-
-    const mockLLM = makeMockLLM(`Please email ${token} for details.`);
+    // The mock echoes the sanitized input back — the wrapper will deanonymize it
+    const mockLLM = makeMockLLM("");
+    (mockLLM.invoke as ReturnType<typeof vi.fn>).mockImplementation(
+      async (input: string) => `Please email ${input} for details.`
+    );
     const safeModel = new SanitizedLLM(mockLLM, sanitizer);
-
-    const response = await safeModel.invoke("Contact dan@example.com for details.");
+    const response = await safeModel.invoke("dan@example.com");
     expect(response).toContain("dan@example.com");
   });
 

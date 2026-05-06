@@ -82,31 +82,33 @@ export class PromptSanitizerNodePostprocessor implements BaseNodePostprocessorLi
   ): Promise<NodeWithScore[]> {
     const session = this._sanitizer.session();
 
-    return Promise.all(
-      nodes.map(async (nodeWithScore) => {
-        const original = nodeWithScore.node.text;
-        const sanitized = await session.anonymize(original);
+    // Sequential processing ensures the shared vault is consistent across all
+    // nodes — concurrent async calls would race on the vault check+generate step.
+    const results: NodeWithScore[] = [];
+    for (const nodeWithScore of nodes) {
+      const original = nodeWithScore.node.text;
+      const sanitized = await session.anonymize(original);
 
-        const updatedNode: TextNode = {
-          ...nodeWithScore.node,
-          text: sanitized,
+      const updatedNode: TextNode = {
+        ...nodeWithScore.node,
+        text: sanitized,
+      };
+
+      if (this._preserveOriginal) {
+        updatedNode.metadata = {
+          ...nodeWithScore.node.metadata,
+          __original_text: original,
         };
+      }
 
-        if (this._preserveOriginal) {
-          updatedNode.metadata = {
-            ...nodeWithScore.node.metadata,
-            __original_text: original,
-          };
-        }
-
-        return {
-          ...nodeWithScore,
-          node: updatedNode,
-          // Attach session so downstream components can deanonymize
-          __sanitizerSession: session,
-        };
-      })
-    );
+      results.push({
+        ...nodeWithScore,
+        node: updatedNode,
+        // Attach session so downstream components can deanonymize
+        __sanitizerSession: session,
+      });
+    }
+    return results;
   }
 }
 

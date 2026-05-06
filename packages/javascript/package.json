@@ -15,15 +15,30 @@
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
-    "./integrations/openai": {
-      "import": "./dist/integrations/openai.js",
-      "require": "./dist/integrations/openai.cjs",
-      "types": "./dist/integrations/openai.d.ts"
-    },
     "./integrations/vercel-ai": {
       "import": "./dist/integrations/vercel-ai.js",
       "require": "./dist/integrations/vercel-ai.cjs",
       "types": "./dist/integrations/vercel-ai.d.ts"
+    },
+    "./integrations/express": {
+      "import": "./dist/integrations/express.js",
+      "require": "./dist/integrations/express.cjs",
+      "types": "./dist/integrations/express.d.ts"
+    },
+    "./integrations/nextjs": {
+      "import": "./dist/integrations/nextjs.js",
+      "require": "./dist/integrations/nextjs.cjs",
+      "types": "./dist/integrations/nextjs.d.ts"
+    },
+    "./integrations/langchain": {
+      "import": "./dist/integrations/langchain.js",
+      "require": "./dist/integrations/langchain.cjs",
+      "types": "./dist/integrations/langchain.d.ts"
+    },
+    "./integrations/llamaindex": {
+      "import": "./dist/integrations/llamaindex.js",
+      "require": "./dist/integrations/llamaindex.cjs",
+      "types": "./dist/integrations/llamaindex.d.ts"
     }
   },
   "files": ["dist", "README.md"],

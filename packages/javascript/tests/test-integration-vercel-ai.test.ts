@@ -49,20 +49,12 @@ describe("wrapGenerate", () => {
 
   it("deanonymizes the response text", async () => {
     const sanitizer = new Sanitizer();
-    const session = sanitizer.session();
-
-    // Pre-populate the vault so we know what token to use in the response
-    const clean = await session.anonymize("Reply to alice@example.com please.");
-    // Extract the token that replaced the email
-    const emailToken = Object.values((session as any)._vault.snapshot())[0] as string;
-
-    const mockGenerate = makeMockGenerateFn(
-      `I will send an email to ${emailToken} right away.`
-    );
+    // The mock echoes the sanitized prompt back — the wrapper will deanonymize it
+    const mockGenerate = vi.fn(async (params: GenerateTextParams): Promise<GenerateTextResult> => ({
+      text: `I will send an email to ${params.prompt} right away.`,
+    }));
     const safeGenerate = wrapGenerate(sanitizer, mockGenerate);
-    const result = await safeGenerate({ prompt: "Reply to alice@example.com please." });
-
-    // The deanonymized response should contain the original email
+    const result = await safeGenerate({ prompt: "alice@example.com" });
     expect(result.text).toContain("alice@example.com");
   });
 
@@ -126,15 +118,14 @@ describe("wrapStream", () => {
   it("yields deanonymized text-delta chunks", async () => {
     const sanitizer = new Sanitizer();
 
-    // First, figure out what token the sanitizer will produce for the email
-    const session = sanitizer.session();
-    await session.anonymize("alice@example.com");
-    const token = Object.values((session as any)._vault.snapshot())[0] as string;
-
-    const mockStream = makeMockStreamFn([`I can email `, `${token} `, `for you.`]);
+    // The mock captures the sanitized prompt and echoes its content back as stream chunks
+    const mockStream = vi.fn(async (params: StreamTextParams): Promise<StreamTextResult> => {
+      const sanitizedPrompt = params.prompt as string;
+      return { fullStream: makeChunkStream([`I can email `, sanitizedPrompt, ` for you.`]) };
+    });
     const safeStream = wrapStream(sanitizer, mockStream);
 
-    const result = await safeStream({ prompt: "Contact alice@example.com for me." });
+    const result = await safeStream({ prompt: "alice@example.com" });
     const chunks: StreamTextChunk[] = [];
     for await (const chunk of result.fullStream) {
       chunks.push(chunk);
