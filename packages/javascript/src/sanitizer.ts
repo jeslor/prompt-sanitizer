@@ -45,7 +45,7 @@ function deduplicate(entities: DetectedEntity[]): DetectedEntity[] {
 
   const ranked = [...entities].sort((a, b) => {
     if (b.confidence !== a.confidence) return b.confidence - a.confidence;
-    return (b.end - b.start) - (a.end - a.start);
+    return b.end - b.start - (a.end - a.start);
   });
 
   const kept: DetectedEntity[] = [];
@@ -53,7 +53,7 @@ function deduplicate(entities: DetectedEntity[]): DetectedEntity[] {
 
   for (const entity of ranked) {
     const overlaps = spans.some(
-      ([s, e]) => !(entity.end <= s || entity.start >= e)
+      ([s, e]) => !(entity.end <= s || entity.start >= e),
     );
     if (!overlaps) {
       kept.push(entity);
@@ -137,10 +137,19 @@ export class Sanitizer {
    * sanitizer.addEntity("EMPLOYEE_ID", /EMP-\d{6}/g, { confidence: 0.95 });
    * ```
    */
-  addEntity(name: string, pattern: RegExp, options: AddEntityOptions = {}): void {
+  addEntity(
+    name: string,
+    pattern: RegExp,
+    options: AddEntityOptions = {},
+  ): void {
     const { confidence = 0.85, validator } = options;
     // Use CUSTOM entity type; the pattern is stored against it
-    this._regexEngine.addPattern(EntityType.CUSTOM, pattern, confidence, validator);
+    this._regexEngine.addPattern(
+      EntityType.CUSTOM,
+      pattern,
+      confidence,
+      validator,
+    );
   }
 
   /** Sanitize a string, returning a {@link SanitizeResult}. */
@@ -175,7 +184,7 @@ export class Sanitizer {
    */
   guard<T extends (...args: any[]) => Promise<any>>(
     fn: T,
-    onDetect: OnDetect = this._onDetect
+    onDetect: OnDetect = this._onDetect,
   ): T {
     const self = this;
     return (async (...args: any[]) => {
@@ -184,7 +193,7 @@ export class Sanitizer {
           if (typeof arg !== "string") return arg;
           const result = await self._runWithMode(arg, new Vault(), onDetect);
           return result.text;
-        })
+        }),
       );
       return fn(...sanitizedArgs);
     }) as T;
@@ -197,16 +206,21 @@ export class Sanitizer {
     text: string,
     vault: Vault,
     onDetect?: OnDetect,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<SanitizeResult> {
-    return this._runWithMode(text, vault, onDetect ?? this._onDetect, sessionId);
+    return this._runWithMode(
+      text,
+      vault,
+      onDetect ?? this._onDetect,
+      sessionId,
+    );
   }
 
   private async _runWithMode(
     text: string,
     vault: Vault,
     onDetect: OnDetect,
-    _sessionId?: string
+    _sessionId?: string,
   ): Promise<SanitizeResult> {
     // Collect entities from all active engines
     let entities: DetectedEntity[] = [
@@ -240,13 +254,13 @@ export class Sanitizer {
       if (entities.length > 0) {
         throw new PIIDetectedError(
           `PII detected: ${entities.map((e) => e.entityType).join(", ")}`,
-          entities
+          entities,
         );
       }
       return { text, original: text, entities: [], tokens: {}, score: 0 };
     }
 
-    // "redact" mode: replace PII with synthetic values
+    // "redact" mode: replace PII(Personal Identifiable Information) with synthetic values
     const tokens: Record<string, string> = {};
     let result = text;
 
@@ -258,7 +272,8 @@ export class Sanitizer {
         vault.add(entity.value, replacement);
       }
       tokens[entity.value] = replacement;
-      result = result.slice(0, entity.start) + replacement + result.slice(entity.end);
+      result =
+        result.slice(0, entity.start) + replacement + result.slice(entity.end);
     }
 
     // Record audit events
@@ -270,7 +285,9 @@ export class Sanitizer {
           entityType: entity.entityType,
           confidence: entity.confidence,
           layer: entity.layer,
-          redactionMethod: replacement.startsWith("[") ? "placeholder" : "synthetic",
+          redactionMethod: replacement.startsWith("[")
+            ? "placeholder"
+            : "synthetic",
           valueHash: _hashValue(entity.value),
         };
         if (_sessionId !== undefined) event.sessionId = _sessionId;
