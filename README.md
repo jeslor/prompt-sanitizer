@@ -2,12 +2,12 @@
 
 [![Python >=3.10](https://img.shields.io/badge/python-%E2%89%A53.10-3776AB?logo=python&logoColor=white)](packages/python/)
 [![Node >=18](https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white)](packages/javascript/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 [![Tests: 255 passing](https://img.shields.io/badge/tests-255%20passing-brightgreen)](#quality--benchmarks)
 
 Privacy-first PII sanitization for LLM pipelines — **Python and TypeScript/JavaScript from one monorepo**.
 
-`prompt-sanitizer` runs **entirely in-process**: no cloud calls, no telemetry, no outbound dependency on third-party redaction APIs. In FAST mode it stays lean with **zero ML dependencies**. In SMART and FULL modes it adds **fully local NER** for names and organizations, plus bidirectional deanonymization, synthetic replacements, and audit logging.
+`prompt-sanitizer` runs **entirely in-process**: no cloud calls, no telemetry, no outbound dependency on third-party redaction APIs. In FAST mode it stays lean with **zero ML dependencies**. In SMART and FULL modes it adds **fully local NER** for names and organizations via Piiranha mDeBERTa-v3 on Python and Xenova BERT-NER-style models on JavaScript, plus bidirectional deanonymization, synthetic replacements, and audit logging.
 
 ---
 
@@ -15,7 +15,7 @@ Privacy-first PII sanitization for LLM pipelines — **Python and TypeScript/Jav
 
 - 🛡️ **Local-only by design** — sanitize prompts before they leave your process
 - ⚡ **Sub-millisecond FAST mode** — regex + secrets engine, zero ML deps
-- 🧠 **Local NER in SMART/FULL** — Piiranha mDeBERTa-v3 (Python) / Xenova Transformers (JS)
+- 🧠 **Local NER in SMART/FULL** — Piiranha mDeBERTa-v3 (Python) / Xenova BERT-NER-style transformers (JS)
 - 🔁 **Bidirectional vault** — anonymize input, send placeholders to the LLM, restore originals in the response
 - 🎭 **Synthetic replacements** — realistic fake names, emails, phones, addresses via Faker instead of blunt `[REDACTED]`
 - 🔐 **Secrets coverage built in** — OpenAI, Anthropic, GitHub, AWS, JWT, DB URLs, private keys, and more

@@ -112,8 +112,6 @@ Sanitizer(
 )
 ```
 
-#### Parameters
-
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `mode` | `Mode` | detection pipeline |
@@ -121,8 +119,6 @@ Sanitizer(
 | `entities` | `list[EntityType] \| None` | optional allowlist of entity types |
 | `on_detect` | `str` | `"redact"`, `"warn"`, or `"block"` |
 | `audit_log` | `BaseAuditLog \| None` | optional audit backend |
-
-#### Methods
 
 | Method | Signature | Description |
 | --- | --- | --- |
@@ -134,120 +130,30 @@ Sanitizer(
 | `guard` | `guard(on_detect: str) -> decorator` | decorate a function with sanitization logic |
 | `audit` | `.audit -> BaseAuditLog | None` | access the configured audit log |
 
-### `sanitize()`
+### Detection policy
+
+| `on_detect` value | Behavior |
+| --- | --- |
+| `"redact"` | rewrite the returned text |
+| `"warn"` | return original text, but populate entities and scores |
+| `"block"` | raise instead of returning sanitized text |
 
 ```python
-result = s.sanitize("Reach me at dev@example.com", session_id="req-001")
-print(result.text)
-```
-
-### `sanitize_batch()`
-
-```python
-results = s.sanitize_batch([
-    "Email a@example.com",
-    "No sensitive data here",
-    "Call +1 415 555 0112",
-])
-```
-
-### `session()`
-
-Use sessions for reversible anonymization across multiple turns.
-
-```python
-session = s.session(session_id="chat-42")
-clean = session.anonymize("My email is ops@example.com")
-restored = session.deanonymize("Reply to [EMAIL_1]")
-```
-
-### `add_entity()`
-
-```python
-s.add_entity(name="customer_id", pattern=r"\bCUS-\d{8}\b", confidence=0.92)
-s.add_entity(name="ticket_ref", pattern=r"\bINC-[A-Z0-9]{10}\b", confidence=0.88)
-```
-
-### `stream()`
-
-```python
-import asyncio
-from prompt_sanitizer import Sanitizer
-
-s = Sanitizer()
-session = s.session()
-clean = session.anonymize("Email me at ops@example.com")
-
-async def source():
-    for part in clean.split():
-        yield part + " "
-        await asyncio.sleep(0)
-
-async def main() -> None:
-    async for chunk in s.stream(source(), session=session):
-        print(chunk, end="")
-
-asyncio.run(main())
-```
-
-### `guard()`
-
-```python
-from prompt_sanitizer import Sanitizer
-
-s = Sanitizer()
+results = s.sanitize_batch(["Email a@example.com", "No sensitive data here"])
 
 @s.guard(on_detect="redact")
 def call_model(prompt: str) -> str:
-    return f"sent: {prompt}"
-
-print(call_model("Customer email is hello@example.com"))
+    return prompt
 ```
+## `Mode`, `SanitizeResult`, and `DetectedEntity`
 
-`guard()` works for sync and async functions. Use `on_detect="block"` when the wrapped function must never receive sensitive input.
-
-## Detection policy
-
-### `on_detect="redact"`
-
-```python
-s = Sanitizer(on_detect="redact")
-print(s.sanitize("My email is user@example.com").text)
-```
-
-### `on_detect="warn"`
-
-```python
-s = Sanitizer(on_detect="warn")
-result = s.sanitize("My IP is 10.0.0.42")
-print(result.text)
-print(result.entities)
-```
-
-### `on_detect="block"`
-
-```python
-from prompt_sanitizer import Sanitizer
-from prompt_sanitizer.exceptions import PIIDetectedError
-
-s = Sanitizer(on_detect="block")
-try:
-    s.sanitize("Token: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-except PIIDetectedError as exc:
-    print(exc)
-```
-
-## `Mode`
-
-| Enum value | Meaning |
+| `Mode` value | Meaning |
 | --- | --- |
 | `Mode.FAST` | regex + secrets, zero deps, sub-ms |
 | `Mode.SMART` | FAST + Piiranha NER, lazy loads on first call |
 | `Mode.FULL` | SMART + synthetic replacement + audit log |
 
-## `SanitizeResult`
-
-| Attribute | Type | Description |
+| `SanitizeResult` attribute | Type | Description |
 | --- | --- | --- |
 | `text` | `str` | sanitized text |
 | `entities` | `list[DetectedEntity]` | detected spans |
@@ -255,16 +161,7 @@ except PIIDetectedError as exc:
 | `risk_score` | `float` | composite score from `0.0` to `1.0` |
 | `has_pii` | `bool` | whether sensitive data was found |
 
-```python
-result = s.sanitize("Contact me at sam@example.com")
-assert result.has_pii is True
-assert isinstance(result.tokens, dict)
-assert 0.0 <= result.risk_score <= 1.0
-```
-
-## `DetectedEntity`
-
-| Attribute | Type | Description |
+| `DetectedEntity` attribute | Type | Description |
 | --- | --- | --- |
 | `entity_type` | `EntityType` | entity classification |
 | `value` | `str` | original matched value |
@@ -274,14 +171,12 @@ assert 0.0 <= result.risk_score <= 1.0
 | `replacement` | `str \| None` | replacement value, if generated |
 
 ```python
+result = s.sanitize("Contact me at sam@example.com")
+assert result.has_pii is True
+assert 0.0 <= result.risk_score <= 1.0
 for entity in result.entities:
-    print(entity.entity_type)
-    print(entity.value)
-    print(entity.start, entity.end)
-    print(entity.confidence)
-    print(entity.replacement)
+    print(entity.entity_type, entity.value, entity.replacement)
 ```
-
 ## Sessions and vaults
 
 Use sessions when the model should never see raw values, but the final response should restore them.
@@ -299,17 +194,13 @@ print(clean_prompt)
 print(final_reply)
 ```
 
-### `Session`
-
-| API | Description |
+| `Session` API | Description |
 | --- | --- |
 | `session.anonymize(text: str) -> str` | replace PII with vault tokens |
 | `session.deanonymize(text: str) -> str` | restore originals from the vault |
 | `session.vault: Vault` | access the underlying vault |
 
-### `Vault`
-
-| API | Description |
+| `Vault` API | Description |
 | --- | --- |
 | `vault.store(value: str, replacement: str) -> None` | store a mapping |
 | `vault.lookup(replacement: str) -> str \| None` | resolve token to original |
@@ -323,7 +214,6 @@ print(vault.lookup("[EMAIL_1]"))
 print(vault.reverse("alice@example.com"))
 vault.clear()
 ```
-
 ## Custom entities
 
 Use `add_entity()` for internal identifiers, tenant-specific secrets, or domain-specific formats.
@@ -464,28 +354,12 @@ PROMPT_SANITIZER = {
 
 ## Entity types
 
-Supported values:
-
-- `EMAIL`
-- `PHONE`
-- `SSN`
-- `CREDIT_CARD`
-- `IBAN`
-- `IP_ADDRESS`
-- `URL`
-- `API_KEY`
-- `JWT_TOKEN`
-- `PERSON_NAME`
-- `ORGANIZATION`
-- `LOCATION`
-- `DATE`
-- `CUSTOM`
-- `SECRET_KEY`
-- `AWS_KEY`
-- `GITHUB_TOKEN`
-- `OPENAI_KEY`
-- `ANTHROPIC_KEY`
-
+| Group | Values |
+| --- | --- |
+| core PII | `EMAIL`, `PHONE`, `SSN`, `CREDIT_CARD`, `IBAN`, `IP_ADDRESS`, `URL`, `DATE` |
+| identity / org | `PERSON_NAME`, `ORGANIZATION`, `LOCATION` |
+| secrets | `API_KEY`, `JWT_TOKEN`, `SECRET_KEY`, `AWS_KEY`, `GITHUB_TOKEN`, `OPENAI_KEY`, `ANTHROPIC_KEY` |
+| extension | `CUSTOM` |
 ## Operational notes
 
 - FAST mode is stdlib-only.
