@@ -22,5 +22,5 @@ class MissingDependencyError(ImportError):
     def __init__(self, package: str, extra: str) -> None:
         super().__init__(
             f"Package '{package}' is required but not installed. "
-            f"Install it with: pip install prompt-sanitizer[{extra}]"
+            f"Install it with: pip install ai-prompt-sanitizer[{extra}]"
         )

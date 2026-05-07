@@ -69,10 +69,10 @@ Source: [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md)
 ### Python
 
 ```bash
-pip install prompt-sanitizer              # FAST mode — zero ML deps
-pip install 'prompt-sanitizer[nlp]'       # + local NER for SMART/FULL
-pip install 'prompt-sanitizer[synthetic]' # + realistic fake replacements
-pip install 'prompt-sanitizer[all]'       # everything
+pip install ai-prompt-sanitizer              # FAST mode — zero ML deps
+pip install 'ai-prompt-sanitizer[nlp]'       # + local NER for SMART/FULL
+pip install 'ai-prompt-sanitizer[synthetic]' # + realistic fake replacements
+pip install 'ai-prompt-sanitizer[all]'       # everything
 ```
 
 ### JavaScript / TypeScript

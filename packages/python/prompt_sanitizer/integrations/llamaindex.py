@@ -25,7 +25,7 @@ Usage::
 
 Requires::
 
-    pip install prompt-sanitizer[integrations]
+    pip install ai-prompt-sanitizer[integrations]
     pip install llama-index-core
 """
 from __future__ import annotations

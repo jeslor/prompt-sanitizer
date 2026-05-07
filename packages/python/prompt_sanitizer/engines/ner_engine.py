@@ -5,7 +5,7 @@ Lazy-loads the Piiranha mDeBERTa-v3 model (iiiorg/piiranha-v1) from
 HuggingFace on first use.  The model is cached at
 ~/.prompt-sanitizer/models/ and never re-downloaded.
 
-Requires: pip install prompt-sanitizer[nlp]
+Requires: pip install ai-prompt-sanitizer[nlp]
 """
 from __future__ import annotations
 
@@ -110,7 +110,7 @@ class NEREngine:
             import warnings
             warnings.warn(
                 "prompt-sanitizer[nlp] not installed — NER layer skipped. "
-                "Install with: pip install prompt-sanitizer[nlp]",
+                "Install with: pip install ai-prompt-sanitizer[nlp]",
                 stacklevel=3,
             )
             return []

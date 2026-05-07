@@ -9,11 +9,11 @@ PII and secret sanitization for Python LLM pipelines.
 Python 3.10+.
 
 ```bash
-pip install prompt-sanitizer
-pip install "prompt-sanitizer[nlp]"
-pip install "prompt-sanitizer[synthetic]"
-pip install "prompt-sanitizer[integrations]"
-pip install "prompt-sanitizer[all]"
+pip install ai-prompt-sanitizer
+pip install "ai-prompt-sanitizer[nlp]"
+pip install "ai-prompt-sanitizer[synthetic]"
+pip install "ai-prompt-sanitizer[integrations]"
+pip install "ai-prompt-sanitizer[all]"
 ```
 
 ### Optional extras
@@ -287,7 +287,7 @@ print(audit.export(format="csv"))
 Install integration dependencies first:
 
 ```bash
-pip install "prompt-sanitizer[integrations]"
+pip install "ai-prompt-sanitizer[integrations]"
 ```
 
 ### LangChain

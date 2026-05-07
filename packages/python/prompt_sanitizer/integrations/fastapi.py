@@ -29,7 +29,7 @@ Configuration options::
 
 Requires::
 
-    pip install prompt-sanitizer[integrations]
+    pip install ai-prompt-sanitizer[integrations]
     pip install fastapi   # or starlette
 """
 from __future__ import annotations

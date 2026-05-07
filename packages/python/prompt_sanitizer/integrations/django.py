@@ -31,7 +31,7 @@ Or configure the middleware explicitly in ``urls.py``::
 
 Requires::
 
-    pip install prompt-sanitizer[integrations]
+    pip install ai-prompt-sanitizer[integrations]
     pip install django
 """
 from __future__ import annotations

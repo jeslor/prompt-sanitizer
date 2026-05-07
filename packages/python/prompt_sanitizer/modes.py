@@ -12,7 +12,7 @@ class Mode(str, Enum):
     SMART = "smart"
     """Regex + secrets + NER (Piiranha mDeBERTa-v3). ~50-200ms on CPU.
     Additionally catches: names, organisations, context-dependent PII.
-    Requires: pip install prompt-sanitizer[nlp]"""
+    Requires: pip install ai-prompt-sanitizer[nlp]"""
 
     FULL = "full"
     """Everything in SMART plus synthetic replacements and audit logging."""

@@ -27,7 +27,7 @@ Usage::
 
 Requires::
 
-    pip install prompt-sanitizer[integrations]
+    pip install ai-prompt-sanitizer[integrations]
     pip install langchain
 """
 from __future__ import annotations

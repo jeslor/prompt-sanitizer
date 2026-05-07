@@ -31,7 +31,7 @@ Async usage::
 
 Requires::
 
-    pip install prompt-sanitizer[integrations]
+    pip install ai-prompt-sanitizer[integrations]
     pip install openai
 """
 from __future__ import annotations
