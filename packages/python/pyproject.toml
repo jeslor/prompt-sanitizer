@@ -42,7 +42,7 @@ integrations = [
     "openai>=1.0.0",
 ]
 all = [
-    "prompt-sanitizer[nlp,synthetic,integrations]",
+    "ai-prompt-sanitizer[nlp,synthetic,integrations]",
 ]
 
 [project.urls]
