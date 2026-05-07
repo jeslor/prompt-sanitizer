@@ -1,0 +1,313 @@
+[
+  {
+    "id": "email_001",
+    "category": "email",
+    "text": "Please email me at john.doe@example.com for the report.",
+    "entities": [{"type": "EMAIL", "value": "john.doe@example.com"}]
+  },
+  {
+    "id": "email_002",
+    "category": "email",
+    "text": "You can reach our support team at help@company.io or sales@company.io.",
+    "entities": [
+      {"type": "EMAIL", "value": "help@company.io"},
+      {"type": "EMAIL", "value": "sales@company.io"}
+    ]
+  },
+  {
+    "id": "email_003",
+    "category": "email",
+    "text": "Forward the invoice to billing+2024@acme-corp.com.",
+    "entities": [{"type": "EMAIL", "value": "billing+2024@acme-corp.com"}]
+  },
+  {
+    "id": "email_004",
+    "category": "email",
+    "text": "The user profile shows email: alice_smith@uni.edu.",
+    "entities": [{"type": "EMAIL", "value": "alice_smith@uni.edu"}]
+  },
+  {
+    "id": "email_005",
+    "category": "email",
+    "text": "Contact us at info@example.org before the deadline.",
+    "entities": [{"type": "EMAIL", "value": "info@example.org"}]
+  },
+  {
+    "id": "phone_001",
+    "category": "phone",
+    "text": "Call me back at (212) 555-7890 whenever you are free.",
+    "entities": [{"type": "PHONE", "value": "(212) 555-7890"}]
+  },
+  {
+    "id": "phone_002",
+    "category": "phone",
+    "text": "The main office number is 415-867-5309 extension 42.",
+    "entities": [{"type": "PHONE", "value": "415-867-5309"}]
+  },
+  {
+    "id": "phone_003",
+    "category": "phone",
+    "text": "International: +44 20 7946 0958 — please include country code.",
+    "entities": [{"type": "PHONE", "value": "+44 20 7946 0958"}]
+  },
+  {
+    "id": "phone_004",
+    "category": "phone",
+    "text": "Mobile: +1 800 555 1234, available Mon-Fri 9am-5pm.",
+    "entities": [{"type": "PHONE", "value": "+1 800 555 1234"}]
+  },
+  {
+    "id": "phone_005",
+    "category": "phone",
+    "text": "Fax number is 312.444.6789, no cover sheet required.",
+    "entities": [{"type": "PHONE", "value": "312.444.6789"}]
+  },
+  {
+    "id": "ssn_001",
+    "category": "ssn",
+    "text": "Social Security Number: 078-05-1120.",
+    "entities": [{"type": "SSN", "value": "078-05-1120"}]
+  },
+  {
+    "id": "ssn_002",
+    "category": "ssn",
+    "text": "Her SSN is 372 14 9263 per the tax filing.",
+    "entities": [{"type": "SSN", "value": "372 14 9263"}]
+  },
+  {
+    "id": "ssn_003",
+    "category": "ssn",
+    "text": "On the W-2 form the taxpayer SSN reads 521-73-9401.",
+    "entities": [{"type": "SSN", "value": "521-73-9401"}]
+  },
+  {
+    "id": "ssn_004",
+    "category": "ssn",
+    "text": "Please verify SSN 234-56-7890 before processing.",
+    "entities": [{"type": "SSN", "value": "234-56-7890"}]
+  },
+  {
+    "id": "ssn_005",
+    "category": "ssn",
+    "text": "The application lists SSN as 301-45-8902.",
+    "entities": [{"type": "SSN", "value": "301-45-8902"}]
+  },
+  {
+    "id": "credit_card_001",
+    "category": "credit_card",
+    "text": "Payment was made with Visa 4111 1111 1111 1111.",
+    "entities": [{"type": "CREDIT_CARD", "value": "4111 1111 1111 1111"}]
+  },
+  {
+    "id": "credit_card_002",
+    "category": "credit_card",
+    "text": "The Mastercard ending in 5500 0000 0000 0004 was declined.",
+    "entities": [{"type": "CREDIT_CARD", "value": "5500 0000 0000 0004"}]
+  },
+  {
+    "id": "credit_card_003",
+    "category": "credit_card",
+    "text": "Amex card number: 3714-496353-98431 on file.",
+    "entities": [{"type": "CREDIT_CARD", "value": "3714-496353-98431"}]
+  },
+  {
+    "id": "credit_card_004",
+    "category": "credit_card",
+    "text": "Charge the Discover card 6011000990139424 for the order.",
+    "entities": [{"type": "CREDIT_CARD", "value": "6011000990139424"}]
+  },
+  {
+    "id": "credit_card_005",
+    "category": "credit_card",
+    "text": "Stored card: 4532015112830366 expires 12/26.",
+    "entities": [{"type": "CREDIT_CARD", "value": "4532015112830366"}]
+  },
+  {
+    "id": "iban_001",
+    "category": "iban",
+    "text": "Bank transfer to GB29 NWBK 6016 1331 9268 19.",
+    "entities": [{"type": "IBAN", "value": "GB29 NWBK 6016 1331 9268 19"}]
+  },
+  {
+    "id": "iban_002",
+    "category": "iban",
+    "text": "IBAN: DE89 3704 0044 0532 0130 00 for wire payments.",
+    "entities": [{"type": "IBAN", "value": "DE89 3704 0044 0532 0130 00"}]
+  },
+  {
+    "id": "iban_003",
+    "category": "iban",
+    "text": "Please use FR76 3000 6000 0112 3456 7890 189 for the refund.",
+    "entities": [{"type": "IBAN", "value": "FR76 3000 6000 0112 3456 7890 189"}]
+  },
+  {
+    "id": "ip_001",
+    "category": "ip_address",
+    "text": "The server is running at 192.168.1.105, port 8080.",
+    "entities": [{"type": "IP_ADDRESS", "value": "192.168.1.105"}]
+  },
+  {
+    "id": "ip_002",
+    "category": "ip_address",
+    "text": "Suspicious login from 203.0.113.42 at 03:14 UTC.",
+    "entities": [{"type": "IP_ADDRESS", "value": "203.0.113.42"}]
+  },
+  {
+    "id": "ip_003",
+    "category": "ip_address",
+    "text": "Public IP: 8.8.8.8 — private: 10.0.0.1.",
+    "entities": [
+      {"type": "IP_ADDRESS", "value": "8.8.8.8"},
+      {"type": "IP_ADDRESS", "value": "10.0.0.1"}
+    ]
+  },
+  {
+    "id": "ip_004",
+    "category": "ip_address",
+    "text": "IPv6 address 2001:0db8:85a3:0000:0000:8a2e:0370:7334 is whitelisted.",
+    "entities": [{"type": "IP_ADDRESS", "value": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}]
+  },
+  {
+    "id": "url_001",
+    "category": "url",
+    "text": "Visit https://internal.company.com/dashboard for the report.",
+    "entities": [{"type": "URL", "value": "https://internal.company.com/dashboard"}]
+  },
+  {
+    "id": "url_002",
+    "category": "url",
+    "text": "The staging endpoint http://api.staging.example.com:3000/v2/users is not public.",
+    "entities": [{"type": "URL", "value": "http://api.staging.example.com:3000/v2/users"}]
+  },
+  {
+    "id": "url_003",
+    "category": "url",
+    "text": "Webhook callback: https://hooks.internal.io/trigger/abc123token",
+    "entities": [{"type": "URL", "value": "https://hooks.internal.io/trigger/abc123token"}]
+  },
+  {
+    "id": "api_key_001",
+    "category": "api_key",
+    "text": "Set OPENAI_API_KEY=sk-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST12 in your environment.",
+    "entities": [{"type": "API_KEY", "value": "sk-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST12"}]
+  },
+  {
+    "id": "api_key_002",
+    "category": "api_key",
+    "text": "GitHub token: ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ012345abcd",
+    "entities": [{"type": "API_KEY", "value": "ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ012345abcd"}]
+  },
+  {
+    "id": "api_key_003",
+    "category": "api_key",
+    "text": "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE in the config.",
+    "entities": [{"type": "API_KEY", "value": "AKIAIOSFODNN7EXAMPLE"}]
+  },
+  {
+    "id": "api_key_004",
+    "category": "api_key",
+    "text": "Bearer token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+    "entities": [{"type": "JWT", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"}]
+  },
+  {
+    "id": "person_001",
+    "category": "person",
+    "text": "The report was reviewed by Dr. Sarah Johnson, our chief compliance officer.",
+    "entities": [{"type": "PERSON", "value": "Sarah Johnson"}],
+    "note": "NER-only — regex tools will miss this"
+  },
+  {
+    "id": "person_002",
+    "category": "person",
+    "text": "Meeting notes from James Carter and Wei Zhang on the Q2 results.",
+    "entities": [
+      {"type": "PERSON", "value": "James Carter"},
+      {"type": "PERSON", "value": "Wei Zhang"}
+    ],
+    "note": "NER-only"
+  },
+  {
+    "id": "person_003",
+    "category": "person",
+    "text": "Please cc: Miguel Santos and Priya Patel on the thread.",
+    "entities": [
+      {"type": "PERSON", "value": "Miguel Santos"},
+      {"type": "PERSON", "value": "Priya Patel"}
+    ],
+    "note": "NER-only"
+  },
+  {
+    "id": "person_004",
+    "category": "person",
+    "text": "The policy was signed by CEO Robert Chen in December.",
+    "entities": [{"type": "PERSON", "value": "Robert Chen"}],
+    "note": "NER-only"
+  },
+  {
+    "id": "person_005",
+    "category": "person",
+    "text": "Patient Fatima Al-Hassan was admitted on Monday.",
+    "entities": [{"type": "PERSON", "value": "Fatima Al-Hassan"}],
+    "note": "NER-only"
+  },
+  {
+    "id": "multi_001",
+    "category": "multi",
+    "text": "Hi, I'm Alice Walker. My email is alice@example.com and SSN is 234-56-7890.",
+    "entities": [
+      {"type": "EMAIL", "value": "alice@example.com"},
+      {"type": "SSN",   "value": "234-56-7890"},
+      {"type": "PERSON","value": "Alice Walker"}
+    ]
+  },
+  {
+    "id": "multi_002",
+    "category": "multi",
+    "text": "Card: 4111 1111 1111 1111. Contact: 555-234-5678. Billing: james@corp.com.",
+    "entities": [
+      {"type": "CREDIT_CARD", "value": "4111 1111 1111 1111"},
+      {"type": "PHONE",       "value": "555-234-5678"},
+      {"type": "EMAIL",       "value": "james@corp.com"}
+    ]
+  },
+  {
+    "id": "multi_003",
+    "category": "multi",
+    "text": "Server 10.0.0.55 logged user admin@sys.io with key sk-TestAbcDef1234567890abcdefghijklmnopqrstuv.",
+    "entities": [
+      {"type": "IP_ADDRESS", "value": "10.0.0.55"},
+      {"type": "EMAIL",      "value": "admin@sys.io"},
+      {"type": "API_KEY",    "value": "sk-TestAbcDef1234567890abcdefghijklmnopqrstuv"}
+    ]
+  },
+  {
+    "id": "clean_001",
+    "category": "clean",
+    "text": "The quarterly earnings report will be published next Friday at 9am EST.",
+    "entities": []
+  },
+  {
+    "id": "clean_002",
+    "category": "clean",
+    "text": "Please review the attached contract and return by end of business.",
+    "entities": []
+  },
+  {
+    "id": "clean_003",
+    "category": "clean",
+    "text": "The new product launch is scheduled for Q3 2026 pending board approval.",
+    "entities": []
+  },
+  {
+    "id": "clean_004",
+    "category": "clean",
+    "text": "Thank you for your message. Our team will respond within 24 hours.",
+    "entities": []
+  },
+  {
+    "id": "clean_005",
+    "category": "clean",
+    "text": "Version 3.2.1 of the software has been released with performance improvements.",
+    "entities": []
+  }
+]
