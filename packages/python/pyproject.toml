@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "prompt-sanitizer"
+name = "ai-prompt-sanitizer"
 version = "0.1.0"
 description = "Lightweight, tiered, bidirectional PII sanitizer for LLM pipelines"
 readme = "README.md"
@@ -46,9 +46,9 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/prompt-sanitizer/prompt-sanitizer"
-Repository = "https://github.com/prompt-sanitizer/prompt-sanitizer"
-Issues = "https://github.com/prompt-sanitizer/prompt-sanitizer/issues"
+Homepage = "https://github.com/jeslor/prompt-sanitizer"
+Repository = "https://github.com/jeslor/prompt-sanitizer"
+Issues = "https://github.com/jeslor/prompt-sanitizer/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["prompt_sanitizer"]
