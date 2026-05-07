@@ -2,46 +2,28 @@
 
 PII and secret sanitization for Python LLM pipelines.
 
-`prompt-sanitizer` is a typed package for detecting, redacting, anonymizing, and restoring sensitive values before they reach an LLM, a tool wrapper, a log sink, or an external SDK. It supports zero-dependency fast paths, optional NER, session-scoped vaults, streaming restoration, and optional audit logging.
+`prompt-sanitizer` provides a typed API for detecting, redacting, anonymizing, and restoring sensitive values before they reach a model, tool, middleware layer, log sink, or SDK wrapper. FAST mode has zero required dependencies. SMART and FULL add optional NLP, synthetic replacement, and audit logging.
 
 ## Install
 
 Python 3.10+.
 
 ```bash
-# FAST mode: zero required dependencies
 pip install prompt-sanitizer
-
-# SMART / FULL mode NER support
 pip install "prompt-sanitizer[nlp]"
-
-# Synthetic replacements
 pip install "prompt-sanitizer[synthetic]"
-
-# SDK and framework integrations
 pip install "prompt-sanitizer[integrations]"
-
-# Everything
 pip install "prompt-sanitizer[all]"
 ```
 
-### Extras
+### Optional extras
 
-| Extra | Adds | Use when |
+| Extra | Adds | Typical use |
 | --- | --- | --- |
-| `nlp` | `transformers` + `torch` | You want context-aware NER in SMART/FULL mode |
-| `synthetic` | `faker` | You want realistic fake replacements |
-| `integrations` | framework / SDK adapters | You want drop-in wrappers for common LLM stacks |
-| `all` | all optional extras | You want the full package surface |
-
-## Why this package
-
-- Zero required dependencies for `Mode.FAST`.
-- One-shot sanitization for prompts, logs, traces, and tool payloads.
-- Reversible anonymization for multi-turn LLM sessions.
-- `warn`, `redact`, and `block` enforcement modes.
-- Streaming support for async chunked responses.
-- Optional audit backends for compliance-oriented workflows.
+| `nlp` | `transformers` + `torch` | NER in SMART/FULL mode |
+| `synthetic` | `faker` | realistic fake replacements |
+| `integrations` | framework / SDK adapters | LangChain, LlamaIndex, OpenAI, FastAPI, Django |
+| `all` | all extras | full feature set |
 
 ## Quick start
 
@@ -64,12 +46,10 @@ for entity in result.entities:
 | Mode | Pipeline | Dependencies | Notes |
 | --- | --- | --- | --- |
 | `Mode.FAST` | regex + secret detectors | none | sub-ms, stdlib only |
-| `Mode.SMART` | FAST + Piiranha NER | `prompt-sanitizer[nlp]` | lazy-loads model on first call |
-| `Mode.FULL` | SMART + synthetic replacement + audit log | usually `nlp` + `synthetic` | best for compliance-oriented workflows |
+| `Mode.SMART` | FAST + Piiranha NER | `prompt-sanitizer[nlp]` | lazy-loads on first call |
+| `Mode.FULL` | SMART + synthetic replacement + audit log | usually `nlp` + `synthetic` | best for compliance-oriented flows |
 
 ### FAST mode
-
-Use FAST for lightweight, always-on sanitization.
 
 ```python
 from prompt_sanitizer import Sanitizer, Mode
@@ -83,17 +63,9 @@ print(result.entities)
 print(result.tokens)
 ```
 
-Typical fits:
-
-- prompt pre-processing
-- log scrubbing
-- middleware guards
-- CI checks
-- zero-dependency CLI tools
+Use FAST for prompt pre-processing, log scrubbing, middleware guards, CI checks, and zero-dependency CLI tooling.
 
 ### SMART mode
-
-SMART adds context-aware entity detection. This is the mode to use when prompts contain free-form prose with names, organizations, dates, or locations that regexes alone may miss.
 
 ```python
 from prompt_sanitizer import Sanitizer, Mode
@@ -108,9 +80,9 @@ for entity in result.entities:
     print(entity.entity_type, entity.value, entity.confidence)
 ```
 
-### FULL mode
+Use SMART when prompts contain free-form prose with names, organizations, dates, or locations that regexes alone may miss.
 
-FULL adds synthetic replacement and audit logging on top of SMART.
+### FULL mode
 
 ```python
 from prompt_sanitizer import Sanitizer, Mode, SQLiteAuditLog
@@ -123,6 +95,8 @@ print(result.text)
 print(result.tokens)
 print(s.audit.export(format="json"))
 ```
+
+Use FULL when you want synthetic replacement plus an audit trail.
 
 ## Public API
 
@@ -142,27 +116,25 @@ Sanitizer(
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `mode` | `Mode` | Detection pipeline to run |
-| `locale` | `str` | Locale used for synthetic replacement generation |
-| `entities` | `list[EntityType] \| None` | Optional allowlist of entity types |
+| `mode` | `Mode` | detection pipeline |
+| `locale` | `str` | locale for synthetic replacement generation |
+| `entities` | `list[EntityType] \| None` | optional allowlist of entity types |
 | `on_detect` | `str` | `"redact"`, `"warn"`, or `"block"` |
-| `audit_log` | `BaseAuditLog \| None` | Optional audit backend |
+| `audit_log` | `BaseAuditLog \| None` | optional audit backend |
 
 #### Methods
 
 | Method | Signature | Description |
 | --- | --- | --- |
-| `sanitize` | `sanitize(text: str, session_id: str | None = None) -> SanitizeResult` | Sanitize one string |
-| `sanitize_batch` | `sanitize_batch(texts: list[str]) -> list[SanitizeResult]` | Sanitize a list of strings |
-| `session` | `session(session_id: str | None = None) -> Session` | Create a reusable anonymization session |
-| `add_entity` | `add_entity(name: str, pattern: str, confidence: float = 0.85) -> None` | Register a custom regex-backed entity |
-| `stream` | `stream(source: AsyncIterable, session: Session | None) -> AsyncGenerator[str, None]` | Restore streamed chunks using a session vault |
-| `guard` | `guard(on_detect: str) -> decorator` | Decorate a function with sanitization logic |
-| `audit` | `.audit -> BaseAuditLog | None` | Access the configured audit backend |
+| `sanitize` | `sanitize(text: str, session_id: str | None = None) -> SanitizeResult` | sanitize one string |
+| `sanitize_batch` | `sanitize_batch(texts: list[str]) -> list[SanitizeResult]` | sanitize multiple inputs |
+| `session` | `session(session_id: str | None = None) -> Session` | create a reusable anonymization session |
+| `add_entity` | `add_entity(name: str, pattern: str, confidence: float = 0.85) -> None` | register a custom entity |
+| `stream` | `stream(source: AsyncIterable, session: Session | None) -> AsyncGenerator[str, None]` | restore streamed chunks |
+| `guard` | `guard(on_detect: str) -> decorator` | decorate a function with sanitization logic |
+| `audit` | `.audit -> BaseAuditLog | None` | access the configured audit log |
 
 ### `sanitize()`
-
-Use `sanitize()` for one-shot rewriting or inspection.
 
 ```python
 result = s.sanitize("Reach me at dev@example.com", session_id="req-001")
@@ -170,8 +142,6 @@ print(result.text)
 ```
 
 ### `sanitize_batch()`
-
-Use `sanitize_batch()` when you have independent inputs and do not need a shared vault.
 
 ```python
 results = s.sanitize_batch([
@@ -183,17 +153,15 @@ results = s.sanitize_batch([
 
 ### `session()`
 
-Use `session()` for reversible anonymization across multiple calls.
+Use sessions for reversible anonymization across multiple turns.
 
 ```python
 session = s.session(session_id="chat-42")
 clean = session.anonymize("My email is ops@example.com")
-restored = session.deanonymize(f"Reply to {list(session.vault.tokens.values())[0]}")
+restored = session.deanonymize("Reply to [EMAIL_1]")
 ```
 
 ### `add_entity()`
-
-Register application-specific identifiers or secrets.
 
 ```python
 s.add_entity(name="customer_id", pattern=r"\bCUS-\d{8}\b", confidence=0.92)
@@ -201,8 +169,6 @@ s.add_entity(name="ticket_ref", pattern=r"\bINC-[A-Z0-9]{10}\b", confidence=0.88
 ```
 
 ### `stream()`
-
-Use `stream()` to restore originals while consuming an async source.
 
 ```python
 import asyncio
@@ -226,8 +192,6 @@ asyncio.run(main())
 
 ### `guard()`
 
-Use `guard()` when you want to protect existing functions without changing their call sites.
-
 ```python
 from prompt_sanitizer import Sanitizer
 
@@ -240,13 +204,11 @@ def call_model(prompt: str) -> str:
 print(call_model("Customer email is hello@example.com"))
 ```
 
-`guard()` works for sync and async functions. Use `on_detect="block"` when the wrapped function must never receive sensitive text.
+`guard()` works for sync and async functions. Use `on_detect="block"` when the wrapped function must never receive sensitive input.
 
 ## Detection policy
 
 ### `on_detect="redact"`
-
-Default mode. Returned text is rewritten.
 
 ```python
 s = Sanitizer(on_detect="redact")
@@ -254,8 +216,6 @@ print(s.sanitize("My email is user@example.com").text)
 ```
 
 ### `on_detect="warn"`
-
-Inspection mode. Original text is preserved, but metadata is still returned.
 
 ```python
 s = Sanitizer(on_detect="warn")
@@ -265,8 +225,6 @@ print(result.entities)
 ```
 
 ### `on_detect="block"`
-
-Hard-stop mode.
 
 ```python
 from prompt_sanitizer import Sanitizer
@@ -291,11 +249,11 @@ except PIIDetectedError as exc:
 
 | Attribute | Type | Description |
 | --- | --- | --- |
-| `text` | `str` | Sanitized text |
-| `entities` | `list[DetectedEntity]` | Detected entity spans |
+| `text` | `str` | sanitized text |
+| `entities` | `list[DetectedEntity]` | detected spans |
 | `tokens` | `dict[str, str]` | `{original_value: replacement}` map |
-| `risk_score` | `float` | Composite risk score from `0.0` to `1.0` |
-| `has_pii` | `bool` | Whether the input contained sensitive data |
+| `risk_score` | `float` | composite score from `0.0` to `1.0` |
+| `has_pii` | `bool` | whether sensitive data was found |
 
 ```python
 result = s.sanitize("Contact me at sam@example.com")
@@ -308,12 +266,12 @@ assert 0.0 <= result.risk_score <= 1.0
 
 | Attribute | Type | Description |
 | --- | --- | --- |
-| `entity_type` | `EntityType` | Entity classification |
-| `value` | `str` | Original matched value |
-| `start` | `int` | Inclusive start offset |
-| `end` | `int` | Exclusive end offset |
-| `confidence` | `float` | Detection confidence |
-| `replacement` | `str \| None` | Replacement value, if generated |
+| `entity_type` | `EntityType` | entity classification |
+| `value` | `str` | original matched value |
+| `start` | `int` | inclusive start offset |
+| `end` | `int` | exclusive end offset |
+| `confidence` | `float` | detection confidence |
+| `replacement` | `str \| None` | replacement value, if generated |
 
 ```python
 for entity in result.entities:
@@ -334,8 +292,6 @@ from prompt_sanitizer import Sanitizer
 s = Sanitizer()
 session = s.session(session_id="support-chat-001")
 clean_prompt = session.anonymize("My name is Elena Ruiz and my email is elena@company.com")
-
-# send clean_prompt to the model, then restore before returning to the user
 llm_reply = "Confirmed. I will email [EMAIL_1] shortly."
 final_reply = session.deanonymize(llm_reply)
 
@@ -347,18 +303,18 @@ print(final_reply)
 
 | API | Description |
 | --- | --- |
-| `session.anonymize(text: str) -> str` | Replace PII with vault tokens |
-| `session.deanonymize(text: str) -> str` | Restore originals from the vault |
-| `session.vault: Vault` | Access the underlying vault |
+| `session.anonymize(text: str) -> str` | replace PII with vault tokens |
+| `session.deanonymize(text: str) -> str` | restore originals from the vault |
+| `session.vault: Vault` | access the underlying vault |
 
 ### `Vault`
 
 | API | Description |
 | --- | --- |
-| `vault.store(value: str, replacement: str) -> None` | Store a mapping |
-| `vault.lookup(replacement: str) -> str \| None` | Resolve token to original |
-| `vault.reverse(value: str) -> str \| None` | Resolve original to replacement |
-| `vault.clear() -> None` | Clear all mappings |
+| `vault.store(value: str, replacement: str) -> None` | store a mapping |
+| `vault.lookup(replacement: str) -> str \| None` | resolve token to original |
+| `vault.reverse(value: str) -> str \| None` | resolve original to replacement |
+| `vault.clear() -> None` | clear all mappings |
 
 ```python
 vault = session.vault
@@ -385,8 +341,6 @@ print(result.entities)
 ```
 
 ## Filtering by entity type
-
-Use `entities=` to restrict the detector to specific types.
 
 ```python
 from prompt_sanitizer import Sanitizer, EntityType
@@ -430,10 +384,10 @@ print(audit.export(format="csv"))
 
 | API | Description |
 | --- | --- |
-| `MemoryAuditLog()` | In-memory list of `AuditEvent` |
+| `MemoryAuditLog()` | in-memory list of `AuditEvent` |
 | `SQLiteAuditLog(path: str)` | SQLite-backed persisted log |
-| `.events() -> list[AuditEvent]` | Return recorded events |
-| `.export(format: "json" \| "csv") -> str` | Export audit records |
+| `.events() -> list[AuditEvent]` | return recorded events |
+| `.export(format: "json" \| "csv") -> str` | export audit records |
 
 ## Integrations
 
@@ -453,8 +407,6 @@ s = Sanitizer()
 chain = PromptSanitizerTransformer(sanitizer=s) | llm | OutputParser()
 result = chain.invoke("My email is dev@example.com")
 ```
-
-Use this when you want sanitization at the front of an LCEL chain and restoration after the model or parser stage.
 
 ### LlamaIndex
 
@@ -482,8 +434,6 @@ response = client.chat.completions.create(
     messages=[{"role": "user", "content": "My card is 4111 1111 1111 1111"}],
 )
 ```
-
-The wrapper sanitizes outgoing content automatically and restores originals in the returned response when vault tokens appear.
 
 ### FastAPI middleware
 
@@ -514,7 +464,7 @@ PROMPT_SANITIZER = {
 
 ## Entity types
 
-Supported entity values:
+Supported values:
 
 - `EMAIL`
 - `PHONE`
@@ -536,33 +486,6 @@ Supported entity values:
 - `OPENAI_KEY`
 - `ANTHROPIC_KEY`
 
-## Common patterns
-
-### Sanitize before calling a model
-
-```python
-s = Sanitizer()
-prompt = "Jane Doe <jane@example.com> needs a refund"
-clean = s.sanitize(prompt).text
-response = llm.invoke(clean)
-```
-
-### Reversible chat session
-
-```python
-session = Sanitizer().session()
-clean_user_text = session.anonymize("Call me at 415-555-0112")
-raw_reply = llm.invoke(clean_user_text)
-final_reply = session.deanonymize(raw_reply)
-```
-
-### Block sensitive content entirely
-
-```python
-s = Sanitizer(on_detect="block")
-s.sanitize("Bearer abcdefghijklmnopqrstuvwxyz123456")
-```
-
 ## Operational notes
 
 - FAST mode is stdlib-only.
@@ -571,22 +494,6 @@ s.sanitize("Bearer abcdefghijklmnopqrstuvwxyz123456")
 - `sanitize()` is for one-shot calls.
 - `session()` is for reversible multi-turn workflows.
 - `sanitize_batch()` treats each input independently.
-
-## Minimal import surface
-
-```python
-from prompt_sanitizer import (
-    Sanitizer,
-    Mode,
-    EntityType,
-    SanitizeResult,
-    DetectedEntity,
-    Session,
-    Vault,
-    MemoryAuditLog,
-    SQLiteAuditLog,
-)
-```
 
 ## License
 
