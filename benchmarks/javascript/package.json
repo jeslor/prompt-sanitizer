@@ -1,0 +1,15 @@
+{
+  "name": "prompt-sanitizer-benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Benchmark suite comparing prompt-sanitizer against Presidio, LLM Guard, and OpenRedaction",
+  "scripts": {
+    "accuracy": "node run_accuracy.mjs",
+    "latency": "node run_latency.mjs",
+    "all": "node run_accuracy.mjs && node run_latency.mjs"
+  },
+  "dependencies": {
+    "openredaction": "^1.0.0"
+  }
+}
