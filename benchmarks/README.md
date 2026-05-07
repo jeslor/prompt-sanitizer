@@ -125,10 +125,10 @@ node run_latency.mjs
 
 | Tool | Regex F1 | Person recall | Latency (medium, median) |
 |------|----------|---------------|--------------------------|
-| prompt-sanitizer FAST | ~95% | 0% | < 1 ms |
-| prompt-sanitizer SMART | ~95% | ~85% | 30–120 ms (first call only) |
-| Presidio | ~88% | ~80% | 5–15 ms |
-| LLM Guard | ~82% | ~90% | 150–500 ms |
-| OpenRedaction | ~78% | 0% | < 0.5 ms |
+| prompt-sanitizer FAST  | ~93% | 0%    | < 0.5 ms               |
+| prompt-sanitizer SMART | ~96% | ~88%  | 3–4 ms (warm)          |
+| Presidio               | ~82% | ~80%  | 5–15 ms                |
+| LLM Guard              | ~82% | ~85%  | 150–500 ms             |
+| OpenRedaction          | ~78% | 0%    | < 0.5 ms               |
 
 > Actual numbers will vary by environment. Run the benchmarks to get your local results.

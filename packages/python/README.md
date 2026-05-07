@@ -145,6 +145,9 @@ results = s.sanitize_batch(["Email a@example.com", "No sensitive data here"])
 def call_model(prompt: str) -> str:
     return prompt
 ```
+
+---
+
 ## `Mode`, `SanitizeResult`, and `DetectedEntity`
 
 | `Mode` value | Meaning |
@@ -291,22 +294,27 @@ pip install "prompt-sanitizer[integrations]"
 
 ```python
 from prompt_sanitizer import Sanitizer
-from prompt_sanitizer.integrations.langchain import PromptSanitizerTransformer
+from prompt_sanitizer.integrations.langchain import PromptSanitizerRunnable, SanitizedLLM
 
 s = Sanitizer()
-chain = PromptSanitizerTransformer(sanitizer=s) | llm | OutputParser()
+# As a runnable step in a chain
+chain = PromptSanitizerRunnable(sanitizer=s) | llm | OutputParser()
 result = chain.invoke("My email is dev@example.com")
+
+# Or wrap the LLM directly
+safe_llm = SanitizedLLM(llm, s)
+reply = safe_llm.invoke("Contact alice@example.com with the summary.")
 ```
 
 ### LlamaIndex
 
 ```python
 from prompt_sanitizer import Sanitizer
-from prompt_sanitizer.integrations.llamaindex import SanitizerQueryTransform
+from prompt_sanitizer.integrations.llamaindex import PromptSanitizerPostprocessor
 
 s = Sanitizer()
-transform = SanitizerQueryTransform(sanitizer=s)
-query_engine = index.as_query_engine(query_transform=transform)
+postprocessor = PromptSanitizerPostprocessor(sanitizer=s)
+query_engine = index.as_query_engine(node_postprocessors=[postprocessor])
 response = query_engine.query("Summarize the contract for jane@example.com")
 ```
 
@@ -315,10 +323,10 @@ response = query_engine.query("Summarize the contract for jane@example.com")
 ```python
 import openai
 from prompt_sanitizer import Sanitizer
-from prompt_sanitizer.integrations.openai_wrapper import wrap_openai
+from prompt_sanitizer.integrations.openai import wrap
 
 s = Sanitizer()
-client = wrap_openai(openai.OpenAI(), sanitizer=s)
+client = wrap(openai.OpenAI(), sanitizer=s)
 response = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": "My card is 4111 1111 1111 1111"}],
@@ -330,7 +338,7 @@ response = client.chat.completions.create(
 ```python
 from fastapi import FastAPI
 from prompt_sanitizer import Sanitizer
-from prompt_sanitizer.integrations.fastapi_middleware import SanitizerMiddleware
+from prompt_sanitizer.integrations.fastapi import SanitizerMiddleware
 
 s = Sanitizer()
 app = FastAPI()
@@ -340,7 +348,7 @@ app.add_middleware(SanitizerMiddleware, sanitizer=s, fields=["prompt", "message"
 ### Django middleware
 
 ```python
-MIDDLEWARE = ["prompt_sanitizer.integrations.django_middleware.SanitizerMiddleware"]
+MIDDLEWARE = ["prompt_sanitizer.integrations.django.SanitizerMiddleware"]
 ```
 
 ```python
@@ -360,6 +368,9 @@ PROMPT_SANITIZER = {
 | identity / org | `PERSON_NAME`, `ORGANIZATION`, `LOCATION` |
 | secrets | `API_KEY`, `JWT_TOKEN`, `SECRET_KEY`, `AWS_KEY`, `GITHUB_TOKEN`, `OPENAI_KEY`, `ANTHROPIC_KEY` |
 | extension | `CUSTOM` |
+
+---
+
 ## Operational notes
 
 - FAST mode is stdlib-only.
