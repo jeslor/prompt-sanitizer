@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/prompt_sanitizer.png" alt="PII and secret sanitization for Python and Typescript LLM pipelines" width="900">
+</p>
+
 # prompt-sanitizer
 
 [![Python >=3.10](https://img.shields.io/badge/python-%E2%89%A53.10-3776AB?logo=python&logoColor=white)](packages/python/)
@@ -27,11 +31,11 @@ Privacy-first PII sanitization for LLM pipelines — **Python and TypeScript/Jav
 
 ## Modes
 
-| Mode | What runs | Best for |
-|------|-----------|----------|
-| **FAST** | Regex + secrets engine | High-throughput prompt filtering, edge workloads, low-latency services |
-| **SMART** | FAST + local NER | User-generated input where names, orgs, and context PII matter |
-| **FULL** | SMART + synthetic replacement + audit log | Production workflows, compliance, GDPR/HIPAA-sensitive systems |
+| Mode      | What runs                                 | Best for                                                               |
+| --------- | ----------------------------------------- | ---------------------------------------------------------------------- |
+| **FAST**  | Regex + secrets engine                    | High-throughput prompt filtering, edge workloads, low-latency services |
+| **SMART** | FAST + local NER                          | User-generated input where names, orgs, and context PII matter         |
+| **FULL**  | SMART + synthetic replacement + audit log | Production workflows, compliance, GDPR/HIPAA-sensitive systems         |
 
 ### What that means in practice
 
@@ -45,13 +49,13 @@ Privacy-first PII sanitization for LLM pipelines — **Python and TypeScript/Jav
 
 Source: [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md)
 
-| Tool | Regex F1 | Person recall | Latency (medium, FAST) | API key recall |
-|------|----------|---------------|------------------------|----------------|
-| **prompt-sanitizer FAST** | ~93% | 0% | **0.3 ms** | **100%** |
-| **prompt-sanitizer SMART** | ~93% | **~88%** | 3–4 ms | **100%** |
-| Presidio | ~82% | ~80% | 15 ms | 0% |
-| LLM Guard | ~82% | ~85% | 150–500 ms | 0% |
-| OpenRedaction (JS) | ~78% | 0% | 0.5 ms | 60% |
+| Tool                       | Regex F1 | Person recall | Latency (medium, FAST) | API key recall |
+| -------------------------- | -------- | ------------- | ---------------------- | -------------- |
+| **prompt-sanitizer FAST**  | ~93%     | 0%            | **0.3 ms**             | **100%**       |
+| **prompt-sanitizer SMART** | ~93%     | **~88%**      | 3–4 ms                 | **100%**       |
+| Presidio                   | ~82%     | ~80%          | 15 ms                  | 0%             |
+| LLM Guard                  | ~82%     | ~85%          | 150–500 ms             | 0%             |
+| OpenRedaction (JS)         | ~78%     | 0%            | 0.5 ms                 | 60%            |
 
 ### Key takeaways
 
@@ -157,9 +161,9 @@ import { Mode, Sanitizer, AuditLog } from "prompt-sanitizer";
 // 1) One-shot sanitize
 const s = new Sanitizer();
 const result = await s.sanitize("Hi, I'm Alice. Email alice@example.com");
-console.log(result.text);     // redacted / replaced text
+console.log(result.text); // redacted / replaced text
 console.log(result.entities); // DetectedEntity[]
-console.log(result.tokens);   // original -> placeholder mapping
+console.log(result.tokens); // original -> placeholder mapping
 
 // 2) Bidirectional session
 const session = s.session();
@@ -195,9 +199,15 @@ console.log(audit.events());
 Example import paths:
 
 ```ts
-import { createExpressMiddleware, createHonoMiddleware } from "prompt-sanitizer/integrations/express";
+import {
+  createExpressMiddleware,
+  createHonoMiddleware,
+} from "prompt-sanitizer/integrations/express";
 import { createNextjsMiddleware } from "prompt-sanitizer/integrations/nextjs";
-import { wrapGenerate, wrapStream } from "prompt-sanitizer/integrations/vercel-ai";
+import {
+  wrapGenerate,
+  wrapStream,
+} from "prompt-sanitizer/integrations/vercel-ai";
 import { SanitizedLLM } from "prompt-sanitizer/integrations/langchain";
 import { PromptSanitizerNodePostprocessor } from "prompt-sanitizer/integrations/llamaindex";
 ```
@@ -220,7 +230,10 @@ app.use(createExpressMiddleware(new Sanitizer({ mode: Mode.SMART })));
 import { generateText, streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { Sanitizer } from "prompt-sanitizer";
-import { wrapGenerate, wrapStream } from "prompt-sanitizer/integrations/vercel-ai";
+import {
+  wrapGenerate,
+  wrapStream,
+} from "prompt-sanitizer/integrations/vercel-ai";
 
 const sanitizer = new Sanitizer();
 const safeGenerateText = wrapGenerate(sanitizer, generateText);
@@ -270,27 +283,27 @@ Deanonymized: "I've drafted a reply to Alice at alice@example.com"
 
 The project intentionally covers both **structured identifiers** and **secrets** that should never reach an LLM. The table below uses the project-level docs names, with notes where current Python/JS enum names differ slightly in `v0.1.0`.
 
-| Docs name | Python runtime | JS runtime | Notes |
-|-----------|----------------|------------|-------|
-| `EMAIL` | `EMAIL` | `EMAIL` | Email addresses |
-| `PHONE` | `PHONE` | `PHONE` | Local + international patterns |
-| `SSN` | `SSN` | `SSN` | US SSN formats |
-| `CREDIT_CARD` | `CREDIT_CARD` | `CREDIT_CARD` | Major card formats with validation |
-| `IBAN` | `IBAN` | `IBAN` | International bank account numbers |
-| `IP_ADDRESS` | `IP_ADDRESS` | `IP_ADDRESS` | IPv4 + IPv6 |
-| `URL` | `URL` | `URL` | URLs and common link patterns |
-| `API_KEY` | `API_KEY` | `API_KEY` | Generic and provider-specific API keys |
-| `JWT_TOKEN` / `JWT` | `JWT` | `JWT_TOKEN` | JSON Web Tokens |
-| `PERSON_NAME` | `PERSON` | `PERSON_NAME` | NER-backed in SMART/FULL |
-| `ORGANIZATION` | via NER | `ORGANIZATION` | NER-backed in SMART/FULL |
-| `LOCATION` | via NER / address classes | `LOCATION` | NER-backed in SMART/FULL |
-| `DATE` | `DATE` | date-like entities | Temporal values |
-| `CUSTOM` | `CUSTOM` | `CUSTOM` | User-defined regex/entity hooks |
-| `SECRET_KEY` | generic secret assignments | `SECRET_KEY` | `.env`-style secrets, config values |
-| `AWS_KEY` | `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` | `AWS_KEY` | Access key IDs and secret keys |
-| `GITHUB_TOKEN` | normalized under `API_KEY` | `OAUTH_TOKEN` | `ghp_`, `github_pat_`, related families |
-| `OPENAI_KEY` | normalized under `API_KEY` | normalized under `API_KEY` | `sk-...` families |
-| `ANTHROPIC_KEY` | normalized under `API_KEY` | normalized under `API_KEY` | `sk-ant-...` families |
+| Docs name           | Python runtime                      | JS runtime                 | Notes                                   |
+| ------------------- | ----------------------------------- | -------------------------- | --------------------------------------- |
+| `EMAIL`             | `EMAIL`                             | `EMAIL`                    | Email addresses                         |
+| `PHONE`             | `PHONE`                             | `PHONE`                    | Local + international patterns          |
+| `SSN`               | `SSN`                               | `SSN`                      | US SSN formats                          |
+| `CREDIT_CARD`       | `CREDIT_CARD`                       | `CREDIT_CARD`              | Major card formats with validation      |
+| `IBAN`              | `IBAN`                              | `IBAN`                     | International bank account numbers      |
+| `IP_ADDRESS`        | `IP_ADDRESS`                        | `IP_ADDRESS`               | IPv4 + IPv6                             |
+| `URL`               | `URL`                               | `URL`                      | URLs and common link patterns           |
+| `API_KEY`           | `API_KEY`                           | `API_KEY`                  | Generic and provider-specific API keys  |
+| `JWT_TOKEN` / `JWT` | `JWT`                               | `JWT_TOKEN`                | JSON Web Tokens                         |
+| `PERSON_NAME`       | `PERSON`                            | `PERSON_NAME`              | NER-backed in SMART/FULL                |
+| `ORGANIZATION`      | via NER                             | `ORGANIZATION`             | NER-backed in SMART/FULL                |
+| `LOCATION`          | via NER / address classes           | `LOCATION`                 | NER-backed in SMART/FULL                |
+| `DATE`              | `DATE`                              | date-like entities         | Temporal values                         |
+| `CUSTOM`            | `CUSTOM`                            | `CUSTOM`                   | User-defined regex/entity hooks         |
+| `SECRET_KEY`        | generic secret assignments          | `SECRET_KEY`               | `.env`-style secrets, config values     |
+| `AWS_KEY`           | `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` | `AWS_KEY`                  | Access key IDs and secret keys          |
+| `GITHUB_TOKEN`      | normalized under `API_KEY`          | `OAUTH_TOKEN`              | `ghp_`, `github_pat_`, related families |
+| `OPENAI_KEY`        | normalized under `API_KEY`          | normalized under `API_KEY` | `sk-...` families                       |
+| `ANTHROPIC_KEY`     | normalized under `API_KEY`          | normalized under `API_KEY` | `sk-ant-...` families                   |
 
 ### Also covered in the current runtime implementations
 

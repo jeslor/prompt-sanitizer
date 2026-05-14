@@ -18,12 +18,12 @@ pip install "ai-prompt-sanitizer[all]"
 
 ### Optional extras
 
-| Extra | Adds | Typical use |
-| --- | --- | --- |
-| `nlp` | `transformers` + `torch` | NER in SMART/FULL mode |
-| `synthetic` | `faker` | realistic fake replacements |
+| Extra          | Adds                     | Typical use                                    |
+| -------------- | ------------------------ | ---------------------------------------------- |
+| `nlp`          | `transformers` + `torch` | NER in SMART/FULL mode                         |
+| `synthetic`    | `faker`                  | realistic fake replacements                    |
 | `integrations` | framework / SDK adapters | LangChain, LlamaIndex, OpenAI, FastAPI, Django |
-| `all` | all extras | full feature set |
+| `all`          | all extras               | full feature set                               |
 
 ## Quick start
 
@@ -43,11 +43,11 @@ for entity in result.entities:
 
 ## Modes
 
-| Mode | Pipeline | Dependencies | Notes |
-| --- | --- | --- | --- |
-| `Mode.FAST` | regex + secret detectors | none | sub-ms, stdlib only |
-| `Mode.SMART` | FAST + Piiranha NER | `prompt-sanitizer[nlp]` | lazy-loads on first call |
-| `Mode.FULL` | SMART + synthetic replacement + audit log | usually `nlp` + `synthetic` | best for compliance-oriented flows |
+| Mode         | Pipeline                                  | Dependencies                | Notes                              |
+| ------------ | ----------------------------------------- | --------------------------- | ---------------------------------- |
+| `Mode.FAST`  | regex + secret detectors                  | none                        | sub-ms, stdlib only                |
+| `Mode.SMART` | FAST + Piiranha NER                       | `prompt-sanitizer[nlp]`     | lazy-loads on first call           |
+| `Mode.FULL`  | SMART + synthetic replacement + audit log | usually `nlp` + `synthetic` | best for compliance-oriented flows |
 
 ### FAST mode
 
@@ -112,31 +112,31 @@ Sanitizer(
 )
 ```
 
-| Parameter | Type | Description |
-| --- | --- | --- |
-| `mode` | `Mode` | detection pipeline |
-| `locale` | `str` | locale for synthetic replacement generation |
-| `entities` | `list[EntityType] \| None` | optional allowlist of entity types |
-| `on_detect` | `str` | `"redact"`, `"warn"`, or `"block"` |
-| `audit_log` | `BaseAuditLog \| None` | optional audit backend |
+| Parameter   | Type                       | Description                                 |
+| ----------- | -------------------------- | ------------------------------------------- |
+| `mode`      | `Mode`                     | detection pipeline                          |
+| `locale`    | `str`                      | locale for synthetic replacement generation |
+| `entities`  | `list[EntityType] \| None` | optional allowlist of entity types          |
+| `on_detect` | `str`                      | `"redact"`, `"warn"`, or `"block"`          |
+| `audit_log` | `BaseAuditLog \| None`     | optional audit backend                      |
 
-| Method | Signature | Description |
-| --- | --- | --- |
-| `sanitize` | `sanitize(text: str, session_id: str | None = None) -> SanitizeResult` | sanitize one string |
-| `sanitize_batch` | `sanitize_batch(texts: list[str]) -> list[SanitizeResult]` | sanitize multiple inputs |
-| `session` | `session(session_id: str | None = None) -> Session` | create a reusable anonymization session |
-| `add_entity` | `add_entity(name: str, pattern: str, confidence: float = 0.85) -> None` | register a custom entity |
-| `stream` | `stream(source: AsyncIterable, session: Session | None) -> AsyncGenerator[str, None]` | restore streamed chunks |
-| `guard` | `guard(on_detect: str) -> decorator` | decorate a function with sanitization logic |
-| `audit` | `.audit -> BaseAuditLog | None` | access the configured audit log |
+| Method           | Signature                                                               | Description                                 |
+| ---------------- | ----------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------- |
+| `sanitize`       | `sanitize(text: str, session_id: str                                    | None = None) -> SanitizeResult`             | sanitize one string                     |
+| `sanitize_batch` | `sanitize_batch(texts: list[str]) -> list[SanitizeResult]`              | sanitize multiple inputs                    |
+| `session`        | `session(session_id: str                                                | None = None) -> Session`                    | create a reusable anonymization session |
+| `add_entity`     | `add_entity(name: str, pattern: str, confidence: float = 0.85) -> None` | register a custom entity                    |
+| `stream`         | `stream(source: AsyncIterable, session: Session                         | None) -> AsyncGenerator[str, None]`         | restore streamed chunks                 |
+| `guard`          | `guard(on_detect: str) -> decorator`                                    | decorate a function with sanitization logic |
+| `audit`          | `.audit -> BaseAuditLog                                                 | None`                                       | access the configured audit log         |
 
 ### Detection policy
 
-| `on_detect` value | Behavior |
-| --- | --- |
-| `"redact"` | rewrite the returned text |
-| `"warn"` | return original text, but populate entities and scores |
-| `"block"` | raise instead of returning sanitized text |
+| `on_detect` value | Behavior                                               |
+| ----------------- | ------------------------------------------------------ |
+| `"redact"`        | rewrite the returned text                              |
+| `"warn"`          | return original text, but populate entities and scores |
+| `"block"`         | raise instead of returning sanitized text              |
 
 ```python
 results = s.sanitize_batch(["Email a@example.com", "No sensitive data here"])
@@ -150,28 +150,28 @@ def call_model(prompt: str) -> str:
 
 ## `Mode`, `SanitizeResult`, and `DetectedEntity`
 
-| `Mode` value | Meaning |
-| --- | --- |
-| `Mode.FAST` | regex + secrets, zero deps, sub-ms |
+| `Mode` value | Meaning                                       |
+| ------------ | --------------------------------------------- |
+| `Mode.FAST`  | regex + secrets, zero deps, sub-ms            |
 | `Mode.SMART` | FAST + Piiranha NER, lazy loads on first call |
-| `Mode.FULL` | SMART + synthetic replacement + audit log |
+| `Mode.FULL`  | SMART + synthetic replacement + audit log     |
 
-| `SanitizeResult` attribute | Type | Description |
-| --- | --- | --- |
-| `text` | `str` | sanitized text |
-| `entities` | `list[DetectedEntity]` | detected spans |
-| `tokens` | `dict[str, str]` | `{original_value: replacement}` map |
-| `risk_score` | `float` | composite score from `0.0` to `1.0` |
-| `has_pii` | `bool` | whether sensitive data was found |
+| `SanitizeResult` attribute | Type                   | Description                         |
+| -------------------------- | ---------------------- | ----------------------------------- |
+| `text`                     | `str`                  | sanitized text                      |
+| `entities`                 | `list[DetectedEntity]` | detected spans                      |
+| `tokens`                   | `dict[str, str]`       | `{original_value: replacement}` map |
+| `risk_score`               | `float`                | composite score from `0.0` to `1.0` |
+| `has_pii`                  | `bool`                 | whether sensitive data was found    |
 
-| `DetectedEntity` attribute | Type | Description |
-| --- | --- | --- |
-| `entity_type` | `EntityType` | entity classification |
-| `value` | `str` | original matched value |
-| `start` | `int` | inclusive start offset |
-| `end` | `int` | exclusive end offset |
-| `confidence` | `float` | detection confidence |
-| `replacement` | `str \| None` | replacement value, if generated |
+| `DetectedEntity` attribute | Type          | Description                     |
+| -------------------------- | ------------- | ------------------------------- |
+| `entity_type`              | `EntityType`  | entity classification           |
+| `value`                    | `str`         | original matched value          |
+| `start`                    | `int`         | inclusive start offset          |
+| `end`                      | `int`         | exclusive end offset            |
+| `confidence`               | `float`       | detection confidence            |
+| `replacement`              | `str \| None` | replacement value, if generated |
 
 ```python
 result = s.sanitize("Contact me at sam@example.com")
@@ -180,6 +180,7 @@ assert 0.0 <= result.risk_score <= 1.0
 for entity in result.entities:
     print(entity.entity_type, entity.value, entity.replacement)
 ```
+
 ## Sessions and vaults
 
 Use sessions when the model should never see raw values, but the final response should restore them.
@@ -197,18 +198,18 @@ print(clean_prompt)
 print(final_reply)
 ```
 
-| `Session` API | Description |
-| --- | --- |
-| `session.anonymize(text: str) -> str` | replace PII with vault tokens |
+| `Session` API                           | Description                      |
+| --------------------------------------- | -------------------------------- |
+| `session.anonymize(text: str) -> str`   | replace PII with vault tokens    |
 | `session.deanonymize(text: str) -> str` | restore originals from the vault |
-| `session.vault: Vault` | access the underlying vault |
+| `session.vault: Vault`                  | access the underlying vault      |
 
-| `Vault` API | Description |
-| --- | --- |
-| `vault.store(value: str, replacement: str) -> None` | store a mapping |
-| `vault.lookup(replacement: str) -> str \| None` | resolve token to original |
-| `vault.reverse(value: str) -> str \| None` | resolve original to replacement |
-| `vault.clear() -> None` | clear all mappings |
+| `Vault` API                                         | Description                     |
+| --------------------------------------------------- | ------------------------------- |
+| `vault.store(value: str, replacement: str) -> None` | store a mapping                 |
+| `vault.lookup(replacement: str) -> str \| None`     | resolve token to original       |
+| `vault.reverse(value: str) -> str \| None`          | resolve original to replacement |
+| `vault.clear() -> None`                             | clear all mappings              |
 
 ```python
 vault = session.vault
@@ -217,6 +218,7 @@ print(vault.lookup("[EMAIL_1]"))
 print(vault.reverse("alice@example.com"))
 vault.clear()
 ```
+
 ## Custom entities
 
 Use `add_entity()` for internal identifiers, tenant-specific secrets, or domain-specific formats.
@@ -275,12 +277,12 @@ print(audit.export(format="csv"))
 
 ### Audit API
 
-| API | Description |
-| --- | --- |
-| `MemoryAuditLog()` | in-memory list of `AuditEvent` |
-| `SQLiteAuditLog(path: str)` | SQLite-backed persisted log |
-| `.events() -> list[AuditEvent]` | return recorded events |
-| `.export(format: "json" \| "csv") -> str` | export audit records |
+| API                                       | Description                    |
+| ----------------------------------------- | ------------------------------ |
+| `MemoryAuditLog()`                        | in-memory list of `AuditEvent` |
+| `SQLiteAuditLog(path: str)`               | SQLite-backed persisted log    |
+| `.events() -> list[AuditEvent]`           | return recorded events         |
+| `.export(format: "json" \| "csv") -> str` | export audit records           |
 
 ## Integrations
 
@@ -362,12 +364,12 @@ PROMPT_SANITIZER = {
 
 ## Entity types
 
-| Group | Values |
-| --- | --- |
-| core PII | `EMAIL`, `PHONE`, `SSN`, `CREDIT_CARD`, `IBAN`, `IP_ADDRESS`, `URL`, `DATE` |
-| identity / org | `PERSON_NAME`, `ORGANIZATION`, `LOCATION` |
-| secrets | `API_KEY`, `JWT_TOKEN`, `SECRET_KEY`, `AWS_KEY`, `GITHUB_TOKEN`, `OPENAI_KEY`, `ANTHROPIC_KEY` |
-| extension | `CUSTOM` |
+| Group          | Values                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| core PII       | `EMAIL`, `PHONE`, `SSN`, `CREDIT_CARD`, `IBAN`, `IP_ADDRESS`, `URL`, `DATE`                    |
+| identity / org | `PERSON_NAME`, `ORGANIZATION`, `LOCATION`                                                      |
+| secrets        | `API_KEY`, `JWT_TOKEN`, `SECRET_KEY`, `AWS_KEY`, `GITHUB_TOKEN`, `OPENAI_KEY`, `ANTHROPIC_KEY` |
+| extension      | `CUSTOM`                                                                                       |
 
 ---
 
