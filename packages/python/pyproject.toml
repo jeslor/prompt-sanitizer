@@ -46,7 +46,7 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://www.jeslor.com/prompt-sanitizer
+Homepage = "https://www.jeslor.com/prompt-sanitizer"
 Repository = "https://github.com/jeslor/prompt-sanitizer"
 Issues = "https://github.com/jeslor/prompt-sanitizer/issues"
 
