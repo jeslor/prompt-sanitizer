@@ -17,7 +17,7 @@
     "type": "git",
     "url": "https://github.com/jeslor/prompt-sanitizer.git"
   },
-  "homepage": "https://github.com/jeslor/prompt-sanitizer#readme",
+  "homepage": "https://www.jeslor.com/prompt-sanitizer",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
