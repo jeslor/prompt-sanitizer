@@ -2,7 +2,7 @@
   <img src="assets/prompt_sanitizer.png" alt="PII and secret sanitization for Python and Typescript LLM pipelines" width="900">
 </p>
 
-# prompt-sanitizer
+# prompt sanitizer
 
 [![Python >=3.10](https://img.shields.io/badge/python-%E2%89%A53.10-3776AB?logo=python&logoColor=white)](packages/python/)
 [![Node >=18](https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white)](packages/javascript/)
@@ -11,11 +11,11 @@
 
 Privacy-first PII sanitization for LLM pipelines — **Python and TypeScript/JavaScript from one monorepo**.
 
-`prompt-sanitizer` runs **entirely in-process**: no cloud calls, no telemetry, no outbound dependency on third-party redaction APIs. In FAST mode it stays lean with **zero ML dependencies**. In SMART and FULL modes it adds **fully local NER** for names and organizations via Piiranha mDeBERTa-v3 on Python and Xenova BERT-NER-style models on JavaScript, plus bidirectional deanonymization, synthetic replacements, and audit logging.
+`prompt sanitizer` runs **entirely in-process**: no cloud calls, no telemetry, no outbound dependency on third-party redaction APIs. In FAST mode it stays lean with **zero ML dependencies**. In SMART and FULL modes it adds **fully local NER** for names and organizations via Piiranha mDeBERTa-v3 on Python and Xenova BERT-NER-style models on JavaScript, plus bidirectional deanonymization, synthetic replacements, and audit logging.
 
 ---
 
-## Why teams pick prompt-sanitizer
+## Why teams pick prompt sanitizer
 
 - 🛡️ **Local-only by design** — sanitize prompts before they leave your process
 - ⚡ **Sub-millisecond FAST mode** — regex + secrets engine, zero ML deps
@@ -51,8 +51,8 @@ Source: [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md)
 
 | Tool                       | Regex F1 | Person recall | Latency (medium, FAST) | API key recall |
 | -------------------------- | -------- | ------------- | ---------------------- | -------------- |
-| **prompt-sanitizer FAST**  | ~93%     | 0%            | **0.3 ms**             | **100%**       |
-| **prompt-sanitizer SMART** | ~93%     | **~88%**      | 3–4 ms                 | **100%**       |
+| **prompt sanitizer FAST**  | ~93%     | 0%            | **0.3 ms**             | **100%**       |
+| **prompt sanitizer SMART** | ~93%     | **~88%**      | 3–4 ms                 | **100%**       |
 | Presidio                   | ~82%     | ~80%          | 15 ms                  | 0%             |
 | LLM Guard                  | ~82%     | ~85%          | 150–500 ms             | 0%             |
 | OpenRedaction (JS)         | ~78%     | 0%            | 0.5 ms                 | 60%            |
@@ -320,7 +320,7 @@ If your workload has custom identifiers — employee IDs, claim numbers, ticket 
 
 A lot of redaction libraries stop at “find a regex, replace with `[REDACTED]`”. That is useful, but incomplete for modern LLM systems.
 
-`prompt-sanitizer` is designed around real application flows:
+`prompt sanitizer` is designed around real application flows:
 
 - **Prompt safety** — sanitize before data leaves your process
 - **Model utility** — preserve semantics with realistic synthetic replacements when needed
@@ -419,10 +419,10 @@ Presidio is a strong project and a good fit for **Python-only** stacks that want
 
 - it does **not** ship with the same built-in API key / secret coverage used here
 - it does **not** provide the same bidirectional session vault workflow out of the box
-- it is **Python-centric**, while prompt-sanitizer ships a matching JS/TS runtime
+- it is **Python-centric**, while prompt sanitizer ships a matching JS/TS runtime
 - its steady-state latency in the included benchmark is materially higher than FAST mode
 
-If you already use Presidio for broader DLP workflows, prompt-sanitizer can still complement it as a fast prompt-boundary sanitizer.
+If you already use Presidio for broader DLP workflows, prompt sanitizer can still complement it as a fast prompt-boundary sanitizer.
 
 ### Why not just use LLM Guard?
 
@@ -433,7 +433,7 @@ LLM Guard is useful when you want a broader LLM policy/security layer, especiall
 - it does not focus on reversible vault-based anonymize/deanonymize sessions
 - it is not designed around a dual-runtime Python + JS developer experience
 
-Use LLM Guard when you need its guardrail surface area. Use prompt-sanitizer when you need **fast, local, reversible PII sanitization**.
+Use LLM Guard when you need its guardrail surface area. Use prompt sanitizer when you need **fast, local, reversible PII sanitization**.
 
 ### Is FAST mode enough for production?
 

@@ -1,8 +1,8 @@
-# prompt-sanitizer
+# prompt sanitizer
 
 PII and secret sanitization for Python LLM pipelines.
 
-`prompt-sanitizer` provides a typed API for detecting, redacting, anonymizing, and restoring sensitive values before they reach a model, tool, middleware layer, log sink, or SDK wrapper. FAST mode has zero required dependencies. SMART and FULL add optional NLP, synthetic replacement, and audit logging.
+`prompt sanitizer` provides a typed API for detecting, redacting, anonymizing, and restoring sensitive values before they reach a model, tool, middleware layer, log sink, or SDK wrapper. FAST mode has zero required dependencies. SMART and FULL add optional NLP, synthetic replacement, and audit logging.
 
 ## Install
 
