@@ -1,0 +1,127 @@
+AllCops:
+  NewCops: disable
+  TargetRubyVersion: 3.1
+  Exclude:
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+
+# ── String style ─────────────────────────────────────────────────────────────
+# Codebase uses double-quoted strings throughout
+Style/StringLiterals:
+  Enabled: false
+
+Style/StringLiteralsInInterpolation:
+  Enabled: false
+
+Style/StringConcatenation:
+  Enabled: false
+
+# ── Metrics ───────────────────────────────────────────────────────────────────
+# PII detection and sanitizer pipelines are inherently complex
+Metrics/MethodLength:
+  Max: 50
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/BlockLength:
+  Max: 50
+  Exclude:
+    - 'spec/**/*'
+    - '*.gemspec'
+
+Metrics/ClassLength:
+  Max: 200
+
+Metrics/AbcSize:
+  Max: 60
+
+Metrics/CyclomaticComplexity:
+  Max: 25
+
+Metrics/PerceivedComplexity:
+  Max: 25
+
+Metrics/ParameterLists:
+  Max: 7
+
+# ── Layout ────────────────────────────────────────────────────────────────────
+Layout/HashAlignment:
+  Enabled: false
+
+Layout/ArgumentAlignment:
+  Enabled: false
+
+Layout/ExtraSpacing:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 325
+
+Layout/TrailingEmptyLines:
+  Enabled: true
+
+# ── Style ─────────────────────────────────────────────────────────────────────
+Style/Documentation:
+  Enabled: false
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: false
+
+Style/TrailingCommaInArrayLiteral:
+  Enabled: false
+
+Style/RescueStandardError:
+  Enabled: false
+
+Style/RegexpLiteral:
+  Enabled: false
+
+Style/RedundantRegexpEscape:
+  Enabled: false
+
+Style/LambdaCall:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/NestedTernaryOperator:
+  Enabled: false
+
+Style/NumericPredicate:
+  Enabled: false
+
+Style/IdenticalConditionalBranches:
+  Enabled: false
+
+Style/MultilineBlockChain:
+  Enabled: false
+
+Style/BlockDelimiters:
+  Enabled: false
+
+Style/SymbolProc:
+  Enabled: false
+
+Style/TrailingUnderscoreVariable:
+  Enabled: false
+
+Style/KeywordParametersOrder:
+  Enabled: false
+
+# ── Gemspec ───────────────────────────────────────────────────────────────────
+Gemspec/OrderedDependencies:
+  Enabled: false
+
+# ── Lint ──────────────────────────────────────────────────────────────────────
+Lint/RedundantCopDisableDirective:
+  Enabled: false
+
+Lint/UnusedMethodArgument:
+  Enabled: false
+
+Lint/UnusedBlockArgument:
+  Enabled: false

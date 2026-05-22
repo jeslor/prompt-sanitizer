@@ -21,7 +21,6 @@ Gem::Specification.new do |spec|
   spec.license               = "MIT"
   spec.required_ruby_version = ">= 3.1"
 
-
   spec.metadata = {
     "homepage_uri"    => spec.homepage,
     "source_code_uri" => "https://github.com/jeslor/prompt-sanitizer/tree/main/packages/ruby",
@@ -55,7 +54,6 @@ Gem::Specification.new do |spec|
   # ── Development dependencies ──────────────────────────────────────────────
   spec.add_development_dependency "rspec",       "~> 3.13"
   spec.add_development_dependency "rake",        "~> 13.0"
-  spec.add_development_dependency "rubocop",     "~> 1.60"
   spec.add_development_dependency "rack",        "~> 3.0"
   spec.add_development_dependency "faker",       "~> 3.0"
 end

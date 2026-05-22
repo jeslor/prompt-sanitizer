@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 PromptSanitizer.configure do |config|
   # Detection mode:
   #   :fast  — regex + secrets patterns only. Zero ML deps. Best for production

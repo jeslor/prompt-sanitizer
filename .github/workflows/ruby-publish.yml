@@ -25,9 +25,13 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
-          bundler-cache: true
-          without: rubocop
           working-directory: packages/ruby
+
+      - name: Install dependencies (without lint group)
+        working-directory: packages/ruby
+        run: |
+          bundle config set --local without lint
+          bundle install --jobs 4
 
       - name: Run tests
         run: bundle exec rspec --format progress
