@@ -155,8 +155,12 @@ module PromptSanitizer
         if existing
           entity.replacement = existing
         else
-          fake = @synthetic.generate(entity.entity_type, entity.original)
-          entity.replacement = vault.add(entity.original, fake)
+          replacement = if @mode == :full
+                          @synthetic.generate(entity.entity_type, entity.original)
+                        else
+                          @synthetic.placeholder(entity.entity_type)
+                        end
+          entity.replacement = vault.add(entity.original, replacement)
         end
       end
 

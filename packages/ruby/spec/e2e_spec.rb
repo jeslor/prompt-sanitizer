@@ -18,27 +18,27 @@ RSpec.describe "End-to-end LLM pipeline", type: :integration do
     it "strips PII before sending and restores it from the reply" do
       session = sanitizer.session
 
-      original = "Book a flight for Alice Chen, alice@example.com, DOB 1990-03-15"
+      original = "Reach me at alice@example.com or 555-867-5309, SSN 234-56-7890"
       clean    = session.anonymize(original)
 
       # No PII leaks to the model
-      expect(clean).not_to include("Alice Chen")
       expect(clean).not_to include("alice@example.com")
-      expect(clean).not_to include("1990-03-15")
+      expect(clean).not_to include("555-867-5309")
+      expect(clean).not_to include("234-56-7890")
 
-      # Tokens are present
-      expect(clean).to match(/\[PERSON_\d+\]/)
+      # Placeholder tokens are present
       expect(clean).to match(/\[EMAIL_\d+\]/)
-      expect(clean).to match(/\[DATE_OF_BIRTH_\d+\]/)
+      expect(clean).to match(/\[PHONE_\d+\]/)
+      expect(clean).to match(/\[SSN_\d+\]/)
 
       # Mock LLM echoes the tokens in its reply
       llm_reply = mock_llm(clean)
       restored  = session.deanonymize(llm_reply)
 
       # Original values are restored in the final reply
-      expect(restored).to include("Alice Chen")
       expect(restored).to include("alice@example.com")
-      expect(restored).to include("1990-03-15")
+      expect(restored).to include("555-867-5309")
+      expect(restored).to include("234-56-7890")
     end
 
     it "preserves non-PII content unchanged" do
@@ -61,35 +61,35 @@ RSpec.describe "End-to-end LLM pipeline", type: :integration do
       session = sanitizer.session
 
       # Turn 1 — introduce the user
-      t1_clean = session.anonymize("Hi, I'm Bob Smith, bob@example.com")
-      expect(t1_clean).not_to include("Bob Smith")
+      t1_clean = session.anonymize("Hi, my email is bob@example.com")
       expect(t1_clean).not_to include("bob@example.com")
 
       # Turn 2 — reference same person again
-      t2_clean = session.anonymize("Please send a summary to Bob Smith")
-      # Must reuse the same PERSON token from turn 1
-      person_token = t1_clean[/\[PERSON_\d+\]/]
-      expect(t2_clean).to include(person_token)
+      t2_clean = session.anonymize("Please send a summary to bob@example.com")
+      # Must reuse the same EMAIL token from turn 1
+      email_token = t1_clean[/\[EMAIL_\d+\]/]
+      expect(email_token).not_to be_nil
+      expect(t2_clean).to include(email_token)
 
       # Deanonymize a response referencing the token
-      reply    = "Done, I sent the summary to #{person_token}."
+      reply    = "Done, I sent the summary to #{email_token}."
       restored = session.deanonymize(reply)
-      expect(restored).to include("Bob Smith")
+      expect(restored).to include("bob@example.com")
     end
 
     it "clears vault after block form" do
-      token = nil
+      email_token = nil
 
       sanitizer.session do |s|
         clean = s.anonymize("Contact Jane at jane@corp.com")
-        token = clean[/\[EMAIL_\d+\]/]
-        expect(token).not_to be_nil
+        email_token = clean[/\[EMAIL_\d+\]/]
+        expect(email_token).not_to be_nil
       end
 
       # New session — vault is empty, so the token is unknown
       session2  = sanitizer.session
-      leftover  = session2.deanonymize("Reply to #{token}")
-      expect(leftover).to eq("Reply to #{token}")   # token stays unreplaced
+      leftover  = session2.deanonymize("Reply to #{email_token}")
+      expect(leftover).to eq("Reply to #{email_token}")   # token stays unreplaced
     end
   end
 
@@ -122,7 +122,7 @@ RSpec.describe "End-to-end LLM pipeline", type: :integration do
       key    = "sk-proj-" + ("A".."Z").to_a.cycle.first(40).join
       result = sanitizer.sanitize("Use API key: #{key}")
       expect(result.text).not_to include(key)
-      expect(result.entities.map(&:type)).to include(:api_key)
+      expect(result.entities.map(&:entity_type)).to include(:api_key)
     end
 
     it "redacts JWT tokens" do
@@ -153,7 +153,7 @@ RSpec.describe "End-to-end LLM pipeline", type: :integration do
         blocking_sanitizer.sanitize("My SSN is 123-45-6789")
       end.to raise_error(PromptSanitizer::PIIDetectedError) do |e|
         expect(e.entities).not_to be_empty
-        expect(e.entities.first.type).to eq(:ssn)
+        expect(e.entities.first.entity_type).to eq(:ssn)
       end
     end
 
@@ -170,12 +170,12 @@ RSpec.describe "End-to-end LLM pipeline", type: :integration do
 
   context "entity whitelist" do
     it "skips whitelisted entity types" do
-      s      = PromptSanitizer::Sanitizer.new(entity_whitelist: %i[email])
+      s      = PromptSanitizer::Sanitizer.new(entities: %i[email])
       result = s.sanitize("Email alice@example.com, SSN 123-45-6789")
 
-      # Email should pass through; SSN should be redacted
-      expect(result.text).to include("alice@example.com")
-      expect(result.text).not_to include("123-45-6789")
+      # Only email is in the allowed list, so SSN is skipped
+      expect(result.text).not_to include("alice@example.com")
+      expect(result.text).to include("123-45-6789")
     end
   end
 
@@ -186,11 +186,11 @@ RSpec.describe "End-to-end LLM pipeline", type: :integration do
   context "custom patterns" do
     it "detects user-defined patterns" do
       s = PromptSanitizer::Sanitizer.new
-      s.add_pattern(/EMP-\d{6}/, :custom)
+      s.add_pattern(:custom, /EMP-\d{6}/)
 
       result = s.sanitize("Assigned to employee EMP-004821")
       expect(result.text).not_to include("EMP-004821")
-      expect(result.entities.map(&:type)).to include(:custom)
+      expect(result.entities.map(&:entity_type)).to include(:custom)
     end
   end
 

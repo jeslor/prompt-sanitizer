@@ -127,8 +127,10 @@ RSpec.describe PromptSanitizer::SyntheticEngine do
         expect(result.length).to be > 10
       end
 
-      it "returns static AWS example key" do
-        expect(engine.generate(:aws_access_key)).to eq("AKIAIOSFODNN7EXAMPLE")
+      it "returns a fake AWS access key (AKIA prefix, 20 chars)" do
+        result = engine.generate(:aws_access_key)
+        expect(result).to match(/\AAKIA[A-Z0-9]{16}\z/)
+        expect(result).not_to eq("AKIAIOSFODNN7EXAMPLE")
       end
 
       it "returns a PEM-style private key placeholder" do

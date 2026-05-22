@@ -112,9 +112,9 @@ module PromptSanitizer
       when :bearer_token, :oauth_token
         "REDACTED_" + Array.new(16) { (("A".."Z").to_a + ("0".."9").to_a).sample }.join
       when :aws_access_key
-        "AKIAIOSFODNN7EXAMPLE"
+        "AKIA" + Array.new(16) { (("A".."Z").to_a + ("0".."9").to_a).sample }.join
       when :aws_secret_key
-        "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        Array.new(40) { (("a".."z").to_a + ("A".."Z").to_a + ("0".."9").to_a + ["+", "/"]).sample }.join
       when :private_key
         "-----BEGIN PRIVATE KEY-----\nREDACTED\n-----END PRIVATE KEY-----"
       when :db_connection, :database_url
