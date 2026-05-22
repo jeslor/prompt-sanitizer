@@ -1,17 +1,18 @@
 <p align="center">
-  <img src="assets/prompt_sanitizer.png" alt="PII and secret sanitization for Python and Typescript LLM pipelines" width="900">
+  <img src="assets/prompt_sanitizer.png" alt="PII and secret sanitization for Python, TypeScript and Ruby LLM pipelines" width="900">
 </p>
 
 # prompt sanitizer
 
 [![Python >=3.10](https://img.shields.io/badge/python-%E2%89%A53.10-3776AB?logo=python&logoColor=white)](packages/python/)
 [![Node >=18](https://img.shields.io/badge/node-%E2%89%A518-339933?logo=node.js&logoColor=white)](packages/javascript/)
+[![Ruby >=3.1](https://img.shields.io/badge/ruby-%E2%89%A53.1-CC342D?logo=ruby&logoColor=white)](packages/ruby/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](#license)
-[![Tests: 255 passing](https://img.shields.io/badge/tests-255%20passing-brightgreen)](#quality--benchmarks)
+[![Tests: 443 passing](https://img.shields.io/badge/tests-443%20passing-brightgreen)](#quality--benchmarks)
 
-Privacy-first PII sanitization for LLM pipelines — **Python and TypeScript/JavaScript from one monorepo**.
+Privacy-first PII sanitization for LLM pipelines — **Python, TypeScript/JavaScript, and Ruby from one monorepo**.
 
-`prompt sanitizer` runs **entirely in-process**: no cloud calls, no telemetry, no outbound dependency on third-party redaction APIs. In FAST mode it stays lean with **zero ML dependencies**. In SMART and FULL modes it adds **fully local NER** for names and organizations via Piiranha mDeBERTa-v3 on Python and Xenova BERT-NER-style models on JavaScript, plus bidirectional deanonymization, synthetic replacements, and audit logging.
+`prompt sanitizer` runs **entirely in-process**: no cloud calls, no telemetry, no outbound dependency on third-party redaction APIs. In FAST mode it stays lean with **zero ML dependencies**. In SMART and FULL modes it adds **fully local NER** for names and organizations via Piiranha mDeBERTa-v3 on Python and Xenova BERT-NER-style models on JavaScript, plus bidirectional deanonymization, synthetic replacements, and audit logging. The Ruby gem brings the same pipeline to Rails and Rack applications with native integrations and zero required runtime dependencies.
 
 ---
 
@@ -19,13 +20,13 @@ Privacy-first PII sanitization for LLM pipelines — **Python and TypeScript/Jav
 
 - 🛡️ **Local-only by design** — sanitize prompts before they leave your process
 - ⚡ **Sub-millisecond FAST mode** — regex + secrets engine, zero ML deps
-- 🧠 **Local NER in SMART/FULL** — Piiranha mDeBERTa-v3 (Python) / Xenova BERT-NER-style transformers (JS)
+- 🧠 **Local NER in SMART/FULL** — Piiranha mDeBERTa-v3 (Python) / Xenova BERT-NER-style transformers (JS) / informers distilbert (Ruby)
 - 🔁 **Bidirectional vault** — anonymize input, send placeholders to the LLM, restore originals in the response
 - 🎭 **Synthetic replacements** — realistic fake names, emails, phones, addresses via Faker instead of blunt `[REDACTED]`
 - 🔐 **Secrets coverage built in** — OpenAI, Anthropic, GitHub, AWS, JWT, DB URLs, private keys, and more
 - 🧾 **Tamper-evident audit logging** — hashed event records with in-memory and SQLite backends
-- 🔌 **Framework integrations** — OpenAI SDK, LangChain, LlamaIndex, FastAPI, Django, Vercel AI SDK, Express, Next.js
-- 🔄 **Dual runtime** — same mental model and API shape in Python and TypeScript
+- 🔌 **Framework integrations** — OpenAI SDK, LangChain, LlamaIndex, FastAPI, Django, Vercel AI SDK, Express, Next.js, Rails/Rack, ActionController, ActiveJob
+- 🔄 **Three runtimes** — same mental model and API shape in Python, TypeScript, and Ruby
 
 ---
 
@@ -91,10 +92,27 @@ npm install @huggingface/transformers
 npm install @faker-js/faker
 ```
 
+### Ruby
+
+```bash
+# Gemfile
+gem "prompt-sanitizer"
+bundle install
+
+# SMART / FULL mode — local NER (requires Ruby >= 3.3)
+gem "informers"   # distilbert ONNX — recommended
+# or
+gem "mitie"       # MITIE-based NER — alternative
+
+# FULL mode — realistic synthetic replacements
+gem "faker"
+```
+
 ### Runtime requirements
 
 - **Python:** `>=3.10`
 - **Node.js:** `>=18`
+- **Ruby:** `>=3.1` (`>=3.3` for NER backends)
 
 ---
 
@@ -252,6 +270,106 @@ const result = await safeStreamText({
 
 ---
 
+## Quick start — Ruby
+
+```ruby
+require "prompt_sanitizer"
+
+# 1) One-shot sanitize
+s = PromptSanitizer::Sanitizer.new   # :fast mode by default
+result = s.sanitize("Hi, I'm Alice. Email me at alice@example.com")
+puts result.text      # "Hi, I'm Alice. Email me at [EMAIL_1]"
+puts result.entities  # [#<DetectedEntity entity_type=:email ...>]
+puts result.any?      # true
+
+# 2) Bidirectional session (anonymize → LLM → deanonymize)
+session = s.session
+clean   = session.anonymize("Call Alice at (415) 867-5309")
+reply   = call_llm(clean)             # model sees [PHONE_1], not the real number
+final   = session.deanonymize(reply)  # originals restored
+
+# Block form — vault cleared automatically
+s.session do |sess|
+  clean = sess.anonymize(user_prompt)
+  sess.deanonymize(llm_client.chat(clean))
+end
+
+# 3) SMART mode with NER (requires `gem "informers"`)
+smart  = PromptSanitizer::Sanitizer.new(mode: :smart)
+result = smart.sanitize("My name is Dr. John Smith")
+puts result.entities.map { |e| [e.entity_type, e.original] }
+
+# 4) FULL mode with audit log + realistic fake replacements
+audit = PromptSanitizer::Audit::MemoryAuditLog.new
+full  = PromptSanitizer::Sanitizer.new(mode: :full, audit_log: audit)
+full.sanitize("Contact alice@example.com about claim 234-56-7890")
+puts audit.export(format: :json, since: "1h")
+
+# 5) Block on PII
+strict = PromptSanitizer::Sanitizer.new(on_detect: :block)
+begin
+  strict.sanitize("My SSN is 234-56-7890")
+rescue PromptSanitizer::PIIDetectedError => e
+  puts e.entities.first.entity_type   # => :ssn
+end
+```
+
+### Rails quick start
+
+```bash
+rails generate prompt_sanitizer:install
+# → creates config/initializers/prompt_sanitizer.rb
+```
+
+```ruby
+# config/initializers/prompt_sanitizer.rb
+PromptSanitizer.configure do |config|
+  config.mode           = :smart
+  config.ner_backend    = :informers   # or :mitie
+  config.on_detect      = :redact
+  config.use_middleware = true         # sanitize JSON bodies automatically
+  config.audit_log      = :memory
+end
+```
+
+```ruby
+# ActionController concern
+class ChatController < ApplicationController
+  include PromptSanitizer::Integrations::ActionControllerConcern
+
+  def create
+    with_pii_session do |session|
+      clean  = session.anonymize(params[:prompt])
+      @reply = session.deanonymize(LLMClient.chat(clean))
+    end
+  end
+end
+```
+
+```ruby
+# ActiveJob concern
+class LLMJob < ApplicationJob
+  include PromptSanitizer::Integrations::ActiveJobConcern
+  sanitize_argument :prompt   # stripped before perform
+
+  def perform(prompt:)
+    LLMClient.chat(prompt)
+  end
+end
+```
+
+### Common Ruby / Rails integrations
+
+- **Rack middleware** — sanitizes `prompt`, `messages[].content`, `text`, `query` in JSON bodies
+- **ActionController** — `sanitize_params!(*keys)` and `with_pii_session { }` helpers
+- **ActiveJob** — `sanitize_argument :field` macro with `around_perform` callback
+- **Custom patterns** — add employee IDs, claim numbers, or tenant keys via `add_pattern`
+
+---
+```
+
+---
+
 ## How the bidirectional vault works
 
 The core workflow is simple:
@@ -281,29 +399,29 @@ Deanonymized: "I've drafted a reply to Alice at alice@example.com"
 
 ## Supported PII types
 
-The project intentionally covers both **structured identifiers** and **secrets** that should never reach an LLM. The table below uses the project-level docs names, with notes where current Python/JS enum names differ slightly in `v0.1.0`.
+The project intentionally covers both **structured identifiers** and **secrets** that should never reach an LLM. The table below uses the project-level docs names, with notes where current Python/JS/Ruby enum names differ slightly in `v0.1.0`.
 
-| Docs name           | Python runtime                      | JS runtime                 | Notes                                   |
-| ------------------- | ----------------------------------- | -------------------------- | --------------------------------------- |
-| `EMAIL`             | `EMAIL`                             | `EMAIL`                    | Email addresses                         |
-| `PHONE`             | `PHONE`                             | `PHONE`                    | Local + international patterns          |
-| `SSN`               | `SSN`                               | `SSN`                      | US SSN formats                          |
-| `CREDIT_CARD`       | `CREDIT_CARD`                       | `CREDIT_CARD`              | Major card formats with validation      |
-| `IBAN`              | `IBAN`                              | `IBAN`                     | International bank account numbers      |
-| `IP_ADDRESS`        | `IP_ADDRESS`                        | `IP_ADDRESS`               | IPv4 + IPv6                             |
-| `URL`               | `URL`                               | `URL`                      | URLs and common link patterns           |
-| `API_KEY`           | `API_KEY`                           | `API_KEY`                  | Generic and provider-specific API keys  |
-| `JWT_TOKEN` / `JWT` | `JWT`                               | `JWT_TOKEN`                | JSON Web Tokens                         |
-| `PERSON_NAME`       | `PERSON`                            | `PERSON_NAME`              | NER-backed in SMART/FULL                |
-| `ORGANIZATION`      | via NER                             | `ORGANIZATION`             | NER-backed in SMART/FULL                |
-| `LOCATION`          | via NER / address classes           | `LOCATION`                 | NER-backed in SMART/FULL                |
-| `DATE`              | `DATE`                              | date-like entities         | Temporal values                         |
-| `CUSTOM`            | `CUSTOM`                            | `CUSTOM`                   | User-defined regex/entity hooks         |
-| `SECRET_KEY`        | generic secret assignments          | `SECRET_KEY`               | `.env`-style secrets, config values     |
-| `AWS_KEY`           | `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` | `AWS_KEY`                  | Access key IDs and secret keys          |
-| `GITHUB_TOKEN`      | normalized under `API_KEY`          | `OAUTH_TOKEN`              | `ghp_`, `github_pat_`, related families |
-| `OPENAI_KEY`        | normalized under `API_KEY`          | normalized under `API_KEY` | `sk-...` families                       |
-| `ANTHROPIC_KEY`     | normalized under `API_KEY`          | normalized under `API_KEY` | `sk-ant-...` families                   |
+| Docs name           | Python runtime                      | JS runtime                 | Ruby runtime                         | Notes                                   |
+| ------------------- | ----------------------------------- | -------------------------- | ------------------------------------ | --------------------------------------- |
+| `EMAIL`             | `EMAIL`                             | `EMAIL`                    | `:email`                             | Email addresses                         |
+| `PHONE`             | `PHONE`                             | `PHONE`                    | `:phone`                             | Local + international patterns          |
+| `SSN`               | `SSN`                               | `SSN`                      | `:ssn`                               | US SSN formats                          |
+| `CREDIT_CARD`       | `CREDIT_CARD`                       | `CREDIT_CARD`              | `:credit_card`                       | Major card formats with validation      |
+| `IBAN`              | `IBAN`                              | `IBAN`                     | `:iban`                              | International bank account numbers      |
+| `IP_ADDRESS`        | `IP_ADDRESS`                        | `IP_ADDRESS`               | `:ip_address`                        | IPv4 + IPv6                             |
+| `URL`               | `URL`                               | `URL`                      | `:url`                               | URLs and common link patterns           |
+| `API_KEY`           | `API_KEY`                           | `API_KEY`                  | `:api_key`                           | Generic and provider-specific API keys  |
+| `JWT_TOKEN` / `JWT` | `JWT`                               | `JWT_TOKEN`                | `:jwt`                               | JSON Web Tokens                         |
+| `PERSON_NAME`       | `PERSON`                            | `PERSON_NAME`              | `:person` (NER)                      | NER-backed in SMART/FULL                |
+| `ORGANIZATION`      | via NER                             | `ORGANIZATION`             | `:organization` (NER)                | NER-backed in SMART/FULL                |
+| `LOCATION`          | via NER / address classes           | `LOCATION`                 | `:location` (NER)                    | NER-backed in SMART/FULL                |
+| `DATE`              | `DATE`                              | date-like entities         | `:date`                              | Temporal values                         |
+| `CUSTOM`            | `CUSTOM`                            | `CUSTOM`                   | `:custom`                            | User-defined regex/entity hooks         |
+| `SECRET_KEY`        | generic secret assignments          | `SECRET_KEY`               | `:api_key` (generic pattern)         | `.env`-style secrets, config values     |
+| `AWS_KEY`           | `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` | `AWS_KEY`                  | `:aws_access_key` / `:aws_secret_key`| Access key IDs and secret keys          |
+| `GITHUB_TOKEN`      | normalized under `API_KEY`          | `OAUTH_TOKEN`              | `:api_key` (normalized)              | `ghp_`, `github_pat_`, related families |
+| `OPENAI_KEY`        | normalized under `API_KEY`          | normalized under `API_KEY` | `:api_key` (normalized)              | `sk-...` families                       |
+| `ANTHROPIC_KEY`     | normalized under `API_KEY`          | normalized under `API_KEY` | `:api_key` (normalized)              | `sk-ant-...` families                   |
 
 ### Also covered in the current runtime implementations
 
@@ -311,6 +429,7 @@ Depending on runtime, the sanitizer also exposes or detects additional entity cl
 
 - **Python:** `ADDRESS`, `ZIP_CODE`, `DATE_OF_BIRTH`, `AGE`, `BANK_ACCOUNT`, `CRYPTO_ADDRESS`, `PASSPORT`, `DRIVING_LICENSE`, `MAC_ADDRESS`, `BEARER_TOKEN`, `PRIVATE_KEY`, `DB_CONNECTION`
 - **JavaScript:** `MAC_ADDRESS`, `CRYPTO_ADDRESS`, `DATE_OF_BIRTH`, `PASSPORT`, `DRIVING_LICENSE`, `AGE`, `GENDER`, `NATIONALITY`, `RELIGION`, `PASSWORD`, `PRIVATE_KEY`, `DATABASE_URL`, `OAUTH_TOKEN`
+- **Ruby:** `ZIP_CODE`, `DATE_OF_BIRTH`, `AGE`, `BANK_ACCOUNT`, `CRYPTO_ADDRESS`, `PASSPORT`, `DRIVING_LICENSE`, `MAC_ADDRESS`, `BEARER_TOKEN`, `PRIVATE_KEY`, `DB_CONNECTION`
 
 If your workload has custom identifiers — employee IDs, claim numbers, ticket numbers, tenant keys — add them with custom patterns and keep them in the same sanitize/deanonymize pipeline.
 
@@ -338,13 +457,15 @@ This repo includes both correctness tests and reproducible benchmarks.
 
 - **Python:** `118 passed`
 - **JavaScript / TypeScript:** `137 passed`
-- **Total:** `255 passed`
+- **Ruby:** `188 passed`
+- **Total:** `443 passed`
 
 ### Benchmark assets
 
 - [`benchmarks/corpus/`](benchmarks/corpus/) — 47 labeled PII samples
 - [`benchmarks/python/`](benchmarks/python/) — Python accuracy + latency runners
 - [`benchmarks/javascript/`](benchmarks/javascript/) — JS accuracy + latency runners
+- [`benchmarks/ruby/`](benchmarks/ruby/) — Ruby accuracy + latency runners
 - [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) — published results
 
 ### Benchmark methodology highlights
@@ -368,6 +489,12 @@ cd ../javascript
 npm install
 node run_accuracy.mjs
 node run_latency.mjs
+
+# Ruby benchmarks
+cd ../ruby
+bundle install
+ruby run_accuracy.rb
+ruby run_latency.rb
 ```
 
 ---
@@ -377,12 +504,14 @@ node run_latency.mjs
 ```text
 prompt-sanitizer/
 ├── packages/
-│   ├── python/           # Python package (prompt-sanitizer on PyPI)
-│   └── javascript/       # npm package (prompt-sanitizer on npm)
+│   ├── python/           # Python package (ai-prompt-sanitizer on PyPI)
+│   ├── javascript/       # npm package (prompt-sanitizer on npm)
+│   └── ruby/             # Ruby gem (prompt-sanitizer on RubyGems)
 ├── benchmarks/           # accuracy + latency benchmarks vs Presidio, LLM Guard, OpenRedaction
 │   ├── corpus/           # 47 labeled PII samples
 │   ├── python/
-│   └── javascript/
+│   ├── javascript/
+│   └── ruby/
 └── docs/                 # additional docs
 ```
 
@@ -419,7 +548,7 @@ Presidio is a strong project and a good fit for **Python-only** stacks that want
 
 - it does **not** ship with the same built-in API key / secret coverage used here
 - it does **not** provide the same bidirectional session vault workflow out of the box
-- it is **Python-centric**, while prompt sanitizer ships a matching JS/TS runtime
+- it is **Python-centric**, while prompt sanitizer ships matching JS/TS and Ruby runtimes
 - its steady-state latency in the included benchmark is materially higher than FAST mode
 
 If you already use Presidio for broader DLP workflows, prompt sanitizer can still complement it as a fast prompt-boundary sanitizer.
@@ -434,6 +563,10 @@ LLM Guard is useful when you want a broader LLM policy/security layer, especiall
 - it is not designed around a dual-runtime Python + JS developer experience
 
 Use LLM Guard when you need its guardrail surface area. Use prompt sanitizer when you need **fast, local, reversible PII sanitization**.
+
+### Does the gem work without Rails?
+
+Yes. The Ruby gem is Rack-compatible and works in any Ruby >= 3.1 environment. Rails integrations (Railtie, middleware, ActionController/ActiveJob concerns, install generator) auto-load only when Rails is present.
 
 ### Is FAST mode enough for production?
 
@@ -463,7 +596,7 @@ Yes. Both runtimes support custom patterns so internal identifiers can go throug
 - **Stay local and predictable**
 - **Handle secrets as seriously as PII**
 - **Preserve developer ergonomics**
-- **Make Python and JS feel like the same tool**
+- **Make Python, JavaScript, and Ruby feel like the same tool**
 
 If that matches your stack, this repo is built for you.
 

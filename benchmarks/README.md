@@ -24,6 +24,10 @@ benchmarks/
 │   ├── run_accuracy.mjs     ← accuracy: same corpus, JS runtime
 │   ├── run_latency.mjs      ← latency: FAST / SMART vs OpenRedaction
 │   └── package.json
+├── ruby/
+│   ├── run_accuracy.rb      ← accuracy: same corpus, Ruby runtime
+│   ├── run_latency.rb       ← latency: FAST / SMART modes
+│   └── Gemfile
 └── RESULTS.md               ← published results (filled after running)
 ```
 
@@ -70,6 +74,24 @@ node run_latency.mjs
 > The JS benchmarks import prompt-sanitizer directly from
 > `packages/javascript/dist/` (built) or `packages/javascript/src/` (via tsx).
 > Run `npm run build` in `packages/javascript/` first.
+
+---
+
+## Running Ruby benchmarks
+
+```bash
+cd benchmarks/ruby
+bundle install       # installs prompt-sanitizer gem from ../packages/ruby
+
+# accuracy
+ruby run_accuracy.rb
+
+# latency
+ruby run_latency.rb
+```
+
+> The Ruby benchmarks load the gem from `packages/ruby/` via a Gemfile path reference.
+> No gem install is required.
 
 ---
 
@@ -125,10 +147,15 @@ node run_latency.mjs
 
 | Tool | Regex F1 | Person recall | Latency (medium, median) |
 |------|----------|---------------|--------------------------|
-| prompt-sanitizer FAST  | ~93% | 0%    | < 0.5 ms               |
-| prompt-sanitizer SMART | ~96% | ~88%  | 3–4 ms (warm)          |
-| Presidio               | ~82% | ~80%  | 5–15 ms                |
-| LLM Guard              | ~82% | ~85%  | 150–500 ms             |
-| OpenRedaction          | ~78% | 0%    | < 0.5 ms               |
+| prompt-sanitizer FAST (Python)  | ~93% | 0%    | < 0.5 ms               |
+| prompt-sanitizer SMART (Python) | ~96% | ~88%  | 3–4 ms (warm)          |
+| prompt-sanitizer FAST (JS)      | ~93% | 0%    | < 0.5 ms               |
+| prompt-sanitizer SMART (JS)     | ~93% | ~88%  | 3–4 ms                 |
+| prompt-sanitizer FAST (Ruby)    | ~93% | 0%    | < 1 ms                 |
+| prompt-sanitizer SMART (Ruby)   | ~93% | ~85%  | ~25–50 ms              |
+| Presidio                        | ~82% | ~80%  | 5–15 ms                |
+| LLM Guard                       | ~82% | ~85%  | 150–500 ms             |
+| OpenRedaction                   | ~78% | 0%    | < 0.5 ms               |
 
 > Actual numbers will vary by environment. Run the benchmarks to get your local results.
+

@@ -1,0 +1,11 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem "prompt_sanitizer", path: "../../packages/ruby"
+
+# Optional: NER mode benchmarks
+# gem "informers"
+
+# Benchmark utilities
+gem "benchmark-ips"
