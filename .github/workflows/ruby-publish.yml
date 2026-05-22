@@ -3,7 +3,7 @@ name: Ruby CI + Publish
 on:
   push:
     branches: [main]
-    tags: ["v*"]
+    tags: ["ruby-v*"]
   pull_request:
     branches: [main]
 
@@ -35,7 +35,7 @@ jobs:
     name: Publish to RubyGems
     needs: test
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/ruby-v')
     defaults:
       run:
         working-directory: packages/ruby
