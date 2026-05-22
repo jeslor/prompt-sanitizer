@@ -22,6 +22,7 @@ GEM
       racc
     prism (1.9.0)
     racc (1.8.1)
+    rack (3.2.6)
     rainbow (3.1.1)
     rake (13.4.2)
     regexp_parser (2.12.0)
@@ -64,6 +65,7 @@ PLATFORMS
 DEPENDENCIES
   faker (>= 2.0)
   prompt-sanitizer!
+  rack (~> 3.2)
   rake (~> 13.0)
   rspec (~> 3.13)
   rubocop (~> 1.60)

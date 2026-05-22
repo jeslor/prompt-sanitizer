@@ -27,8 +27,6 @@ module PromptSanitizer
     #     end
     #   end
     module ActionControllerConcern
-      extend ActiveSupport::Concern
-
       # Sanitize one or more param keys in-place.
       #
       # @param keys [Array<Symbol, String>] param keys whose string values

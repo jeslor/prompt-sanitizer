@@ -10,3 +10,5 @@ gemspec
 
 # Faker installed for development/test — enables SyntheticEngine faker-backed tests
 gem "faker", ">= 2.0"
+
+gem "rack", "~> 3.2", group: :test
