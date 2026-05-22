@@ -101,5 +101,10 @@ require_relative "prompt_sanitizer/audit/memory_audit_log"
 require_relative "prompt_sanitizer/session"
 require_relative "prompt_sanitizer/sanitizer"
 
-# Rails integration — loaded only when Rails is present
-require_relative "prompt_sanitizer/railtie" if defined?(Rails)
+# Rails integrations — loaded only when Rails is present.
+if defined?(Rails)
+  require_relative "prompt_sanitizer/railtie"
+  require_relative "prompt_sanitizer/integrations/middleware"
+  require_relative "prompt_sanitizer/integrations/action_controller"
+  require_relative "prompt_sanitizer/integrations/active_job"
+end
