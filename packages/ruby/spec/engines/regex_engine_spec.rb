@@ -122,7 +122,8 @@ RSpec.describe PromptSanitizer::Engines::RegexEngine do
     end
 
     it "detects an Ethereum address" do
-      entities = engine.detect("ETH: 0x742d35Cc6634C0532925a3b8D4C9B5e1fF4C3d2.")
+      # 40 hex chars after 0x — valid Ethereum address format
+      entities = engine.detect("ETH: 0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe.")
       expect(entities.map(&:entity_type)).to include(:crypto_address)
     end
   end
