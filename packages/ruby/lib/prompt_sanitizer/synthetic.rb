@@ -27,8 +27,8 @@ module PromptSanitizer
       HAS_FAKER = false
     end
 
-    # @param locale [String] BCP-47 locale tag forwarded to Faker (e.g. "en_US", "fr")
-    def initialize(locale: "en_US")
+    # @param locale [String] BCP-47 locale tag forwarded to Faker (e.g. "en", "fr", "de")
+    def initialize(locale: "en")
       @locale   = locale
       @counters = Hash.new(0) # entity_type Symbol → Integer
       if HAS_FAKER
@@ -68,7 +68,7 @@ module PromptSanitizer
       when :person
         Faker::Name.name
       when :email
-        Faker::Internet.safe_email
+        Faker::Internet.email
       when :phone
         Faker::PhoneNumber.phone_number
       when :ssn
@@ -131,9 +131,11 @@ module PromptSanitizer
     def fake_luhn_card
       digits = [4] + Array.new(14) { rand(0..9) }
 
-      # Calculate check digit
+      # Calculate check digit — double digits at even indices (0,2,4,...,14)
+      # so that in the final 16-digit number they sit at even positions from
+      # the right (2,4,...,16) as required by the Luhn algorithm.
       sum = digits.each_with_index.sum do |d, i|
-        if (digits.length - i).even?
+        if i.even?
           doubled = d * 2
           doubled > 9 ? doubled - 9 : doubled
         else
