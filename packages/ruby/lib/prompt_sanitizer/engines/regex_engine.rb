@@ -172,7 +172,9 @@ module PromptSanitizer
       # Register a custom regex pattern at runtime.
       #
       #   engine.add_pattern(:custom, /\bACME-\d{6}\b/, confidence: 0.90)
+      #   engine.add_pattern(:custom, "ACME-\\d{6}", confidence: 0.90)
       def add_pattern(entity_type, regex, confidence: 0.80, validator: nil)
+        regex = Regexp.new(regex) if regex.is_a?(String)
         @patterns << Pattern.new(
           entity_type: entity_type,
           regex:       regex,

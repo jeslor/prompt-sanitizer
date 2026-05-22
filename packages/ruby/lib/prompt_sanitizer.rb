@@ -3,9 +3,23 @@
 require_relative "prompt_sanitizer/version"
 
 module PromptSanitizer
-  class Error             < StandardError; end
+  class Error              < StandardError; end
   class ConfigurationError < Error; end
   class ModeError          < Error; end
+
+  # Raised when on_detect: :block and PII is found.
+  # @example
+  #   rescue PromptSanitizer::PIIDetectedError => e
+  #     e.entities  # => Array<DetectedEntity>
+  class PIIDetectedError < Error
+    attr_reader :entities
+
+    def initialize(entities)
+      @entities = entities
+      types = entities.map { |e| e.entity_type }.uniq.join(", ")
+      super("PII detected and blocked (types: #{types})")
+    end
+  end
 
   # ── Configuration ──────────────────────────────────────────────────────────
 
