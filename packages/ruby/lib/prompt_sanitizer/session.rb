@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Stub — full implementation coming in Step 7
+# Stub — full implementation coming in Step 7 of development. For now, this class is just a placeholder to allow the rest of the code to function without errors.
 module PromptSanitizer
   class Session
     def initialize(sanitizer, session_id: nil)
