@@ -9,7 +9,25 @@ description = "Lightweight, tiered, bidirectional PII sanitizer for LLM pipeline
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
-keywords = ["pii", "privacy", "llm", "sanitizer", "redaction", "anonymization", "gdpr", "hipaa"]
+keywords = ["llm",
+    "pii",
+    "privacy",
+    "sanitizer",
+    "redaction",
+    "anonymization",
+    "guardrails",
+    "prompt-injection",
+    "data-leakage",
+    "llmops",
+    "rag",
+    "genai",
+    "gdpr",
+    "hipaa",
+    "compliance",
+    "langchain",
+    "llama-index",
+    "openai",
+    "fastapi",]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
