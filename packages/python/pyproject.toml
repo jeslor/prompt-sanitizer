@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ai-prompt-sanitizer"
-version = "1.0.1"
+version = "1.0.4"
 description = "Lightweight, tiered, bidirectional PII sanitizer for LLM pipelines"
 readme = "README.md"
 license = { text = "MIT" }
