@@ -1,6 +1,6 @@
 {
   "name": "prompt-sanitizer",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Lightweight, tiered, bidirectional PII sanitizer for LLM pipelines",
   "keywords": [
     "llm",
