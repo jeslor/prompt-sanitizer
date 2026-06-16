@@ -366,7 +366,8 @@ end
 - **Custom patterns** — add employee IDs, claim numbers, or tenant keys via `add_pattern`
 
 ---
-```
+
+````
 
 ---
 
@@ -393,7 +394,7 @@ Input:        "Email Alice at alice@example.com"
 Anonymized:   "Email [PERSON_1] at [EMAIL_1]"
 LLM output:   "I've drafted a reply to [PERSON_1] at [EMAIL_1]"
 Deanonymized: "I've drafted a reply to Alice at alice@example.com"
-```
+````
 
 ---
 
@@ -401,27 +402,27 @@ Deanonymized: "I've drafted a reply to Alice at alice@example.com"
 
 The project intentionally covers both **structured identifiers** and **secrets** that should never reach an LLM. The table below uses the project-level docs names, with notes where current Python/JS/Ruby enum names differ slightly in `v0.1.0`.
 
-| Docs name           | Python runtime                      | JS runtime                 | Ruby runtime                         | Notes                                   |
-| ------------------- | ----------------------------------- | -------------------------- | ------------------------------------ | --------------------------------------- |
-| `EMAIL`             | `EMAIL`                             | `EMAIL`                    | `:email`                             | Email addresses                         |
-| `PHONE`             | `PHONE`                             | `PHONE`                    | `:phone`                             | Local + international patterns          |
-| `SSN`               | `SSN`                               | `SSN`                      | `:ssn`                               | US SSN formats                          |
-| `CREDIT_CARD`       | `CREDIT_CARD`                       | `CREDIT_CARD`              | `:credit_card`                       | Major card formats with validation      |
-| `IBAN`              | `IBAN`                              | `IBAN`                     | `:iban`                              | International bank account numbers      |
-| `IP_ADDRESS`        | `IP_ADDRESS`                        | `IP_ADDRESS`               | `:ip_address`                        | IPv4 + IPv6                             |
-| `URL`               | `URL`                               | `URL`                      | `:url`                               | URLs and common link patterns           |
-| `API_KEY`           | `API_KEY`                           | `API_KEY`                  | `:api_key`                           | Generic and provider-specific API keys  |
-| `JWT_TOKEN` / `JWT` | `JWT`                               | `JWT_TOKEN`                | `:jwt`                               | JSON Web Tokens                         |
-| `PERSON_NAME`       | `PERSON`                            | `PERSON_NAME`              | `:person` (NER)                      | NER-backed in SMART/FULL                |
-| `ORGANIZATION`      | via NER                             | `ORGANIZATION`             | `:organization` (NER)                | NER-backed in SMART/FULL                |
-| `LOCATION`          | via NER / address classes           | `LOCATION`                 | `:location` (NER)                    | NER-backed in SMART/FULL                |
-| `DATE`              | `DATE`                              | date-like entities         | `:date`                              | Temporal values                         |
-| `CUSTOM`            | `CUSTOM`                            | `CUSTOM`                   | `:custom`                            | User-defined regex/entity hooks         |
-| `SECRET_KEY`        | generic secret assignments          | `SECRET_KEY`               | `:api_key` (generic pattern)         | `.env`-style secrets, config values     |
-| `AWS_KEY`           | `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` | `AWS_KEY`                  | `:aws_access_key` / `:aws_secret_key`| Access key IDs and secret keys          |
-| `GITHUB_TOKEN`      | normalized under `API_KEY`          | `OAUTH_TOKEN`              | `:api_key` (normalized)              | `ghp_`, `github_pat_`, related families |
-| `OPENAI_KEY`        | normalized under `API_KEY`          | normalized under `API_KEY` | `:api_key` (normalized)              | `sk-...` families                       |
-| `ANTHROPIC_KEY`     | normalized under `API_KEY`          | normalized under `API_KEY` | `:api_key` (normalized)              | `sk-ant-...` families                   |
+| Docs name           | Python runtime                      | JS runtime                 | Ruby runtime                          | Notes                                   |
+| ------------------- | ----------------------------------- | -------------------------- | ------------------------------------- | --------------------------------------- |
+| `EMAIL`             | `EMAIL`                             | `EMAIL`                    | `:email`                              | Email addresses                         |
+| `PHONE`             | `PHONE`                             | `PHONE`                    | `:phone`                              | Local + international patterns          |
+| `SSN`               | `SSN`                               | `SSN`                      | `:ssn`                                | US SSN formats                          |
+| `CREDIT_CARD`       | `CREDIT_CARD`                       | `CREDIT_CARD`              | `:credit_card`                        | Major card formats with validation      |
+| `IBAN`              | `IBAN`                              | `IBAN`                     | `:iban`                               | International bank account numbers      |
+| `IP_ADDRESS`        | `IP_ADDRESS`                        | `IP_ADDRESS`               | `:ip_address`                         | IPv4 + IPv6                             |
+| `URL`               | `URL`                               | `URL`                      | `:url`                                | URLs and common link patterns           |
+| `API_KEY`           | `API_KEY`                           | `API_KEY`                  | `:api_key`                            | Generic and provider-specific API keys  |
+| `JWT_TOKEN` / `JWT` | `JWT`                               | `JWT_TOKEN`                | `:jwt`                                | JSON Web Tokens                         |
+| `PERSON_NAME`       | `PERSON`                            | `PERSON_NAME`              | `:person` (NER)                       | NER-backed in SMART/FULL                |
+| `ORGANIZATION`      | via NER                             | `ORGANIZATION`             | `:organization` (NER)                 | NER-backed in SMART/FULL                |
+| `LOCATION`          | via NER / address classes           | `LOCATION`                 | `:location` (NER)                     | NER-backed in SMART/FULL                |
+| `DATE`              | `DATE`                              | date-like entities         | `:date`                               | Temporal values                         |
+| `CUSTOM`            | `CUSTOM`                            | `CUSTOM`                   | `:custom`                             | User-defined regex/entity hooks         |
+| `SECRET_KEY`        | generic secret assignments          | `SECRET_KEY`               | `:api_key` (generic pattern)          | `.env`-style secrets, config values     |
+| `AWS_KEY`           | `AWS_ACCESS_KEY` / `AWS_SECRET_KEY` | `AWS_KEY`                  | `:aws_access_key` / `:aws_secret_key` | Access key IDs and secret keys          |
+| `GITHUB_TOKEN`      | normalized under `API_KEY`          | `OAUTH_TOKEN`              | `:api_key` (normalized)               | `ghp_`, `github_pat_`, related families |
+| `OPENAI_KEY`        | normalized under `API_KEY`          | normalized under `API_KEY` | `:api_key` (normalized)               | `sk-...` families                       |
+| `ANTHROPIC_KEY`     | normalized under `API_KEY`          | normalized under `API_KEY` | `:api_key` (normalized)               | `sk-ant-...` families                   |
 
 ### Also covered in the current runtime implementations
 
@@ -604,4 +605,4 @@ If that matches your stack, this repo is built for you.
 
 ## License
 
-MIT
+Prompt Sanitizer packages are released under MIT licence [MIT License](https://github.com/jeslor/prompt-sanitizer/blob/main/LICENSE).
