@@ -22,11 +22,27 @@ export { Sanitizer } from "./sanitizer.js";
 export type { SanitizerOptions, OnDetect, AddEntityOptions } from "./sanitizer.js";
 
 export { Session } from "./session.js";
+export type { SessionStoreOptions } from "./session.js";
 export { Vault } from "./vault.js";
+export type { VaultData } from "./vault.js";
+export {
+  InMemoryVaultStore,
+  FileVaultStore,
+  toVaultSnapshot,
+  assertSupportedVersion,
+  VAULT_SNAPSHOT_VERSION,
+} from "./vault-store.js";
+export type { VaultStore, VaultSnapshot } from "./vault-store.js";
 export { Mode } from "./modes.js";
 export { EntityType } from "./entities.js";
-export { PIIDetectedError, MissingDependencyError } from "./exceptions.js";
+export {
+  PIIDetectedError,
+  MissingDependencyError,
+  VaultCollisionError,
+  VaultStoreError,
+} from "./exceptions.js";
 export { SyntheticEngine } from "./synthetic.js";
+export type { CounterSource } from "./synthetic.js";
 export { RegexEngine } from "./engines/regex-engine.js";
 export { SecretsEngine } from "./engines/secrets-engine.js";
 export { NerEngine, DEFAULT_NER_MODEL } from "./engines/ner-engine.js";

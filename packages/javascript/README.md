@@ -162,6 +162,25 @@ console.log(finalReply);
 
 Useful members: `anonymize()`, `anonymizeWithResult()`, `deanonymize()`, `reset()`, `size`, `mapping`, `sessionId`.
 
+### Persisting sessions across restarts
+
+By default a session's vault lives only in process memory. Pass a `VaultStore` to reattach to the same mapping later by `sessionId` — e.g. after a worker restart or serverless cold start:
+
+```ts
+import { FileVaultStore } from "prompt-sanitizer";
+
+const store = new FileVaultStore("./vault-data");
+const session = await sanitizer.session("chat-42", { store }); // async: loads any existing snapshot first
+const clean = await session.anonymize("Alice's email is alice@example.com");
+await session.persist();
+
+// ...later, possibly in a new process:
+const resumed = await sanitizer.session("chat-42", { store });
+const finalReply = resumed.deanonymize(llmReply);
+```
+
+`InMemoryVaultStore` is the zero-dependency, same-process reference store; `FileVaultStore` persists to disk (Node builtins only). Pass `{ store, autoPersist: true }` to persist automatically after every `anonymize()` call instead of calling `persist()` yourself. No store is active unless you pass one.
+
 ## `guard()`
 
 Wrap a function so all string arguments are sanitized before invocation.

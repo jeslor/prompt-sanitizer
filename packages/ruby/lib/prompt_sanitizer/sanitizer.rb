@@ -27,6 +27,9 @@ module PromptSanitizer
     # @param audit_log  [Audit::Base, nil]  custom audit backend
     # @param ner_backend [Symbol] :informers (default) or :mitie
     # @param ner_model   [String] NER model variant
+    # @param vault_store [VaultStore::Base, nil] default store used by
+    #   #session when no explicit +store:+ is given
+    # rubocop:disable Metrics/ParameterLists
     def initialize(
       mode: :fast,
       locale: "en",
@@ -34,8 +37,10 @@ module PromptSanitizer
       on_detect: :redact,
       audit_log: nil,
       ner_backend: :informers,
-      ner_model: "distilbert"
+      ner_model: "distilbert",
+      vault_store: nil
     )
+      # rubocop:enable Metrics/ParameterLists
       unless Mode.valid?(mode)
         raise ConfigurationError, "Invalid mode: #{mode.inspect}. Use :fast, :smart, or :full"
       end
@@ -49,7 +54,8 @@ module PromptSanitizer
       @secrets = Engines::SecretsEngine.new
       @ner     = mode == :fast ? nil : Engines::NEREngine.new(backend: ner_backend, model: ner_model)
 
-      @synthetic = SyntheticEngine.new(locale: locale)
+      @synthetic   = SyntheticEngine.new(locale: locale)
+      @vault_store = vault_store
 
       @audit = if audit_log && audit_log != :none
                  audit_log
@@ -91,11 +97,19 @@ module PromptSanitizer
     # Without a block, returns a Session you manage yourself.
     # With a block, yields the Session and clears the vault after the block.
     #
+    # Pass +store:+ (or configure a default via +vault_store:+ on the
+    # Sanitizer) to reattach to a previously-persisted vault by
+    # +session_id+ — any existing snapshot is loaded synchronously before
+    # this method returns.
+    #
     # @param session_id [String, nil]
+    # @param store [VaultStore::Base, nil] defaults to this Sanitizer's
+    #   configured vault_store, if any
+    # @param auto_persist [Boolean] persist to +store+ after every #anonymize
     # @yieldparam sess [Session]
     # @return [Session, Object] the Session (no block) or block return value
-    def session(session_id: nil, &block)
-      sess = Session.new(self, session_id: session_id)
+    def session(session_id: nil, store: @vault_store, auto_persist: false, &block)
+      sess = Session.new(self, session_id: session_id, store: store, auto_persist: auto_persist)
       return sess unless block_given?
 
       sess.use(&block)
@@ -156,9 +170,9 @@ module PromptSanitizer
           entity.replacement = existing
         else
           replacement = if @mode == :full
-                          @synthetic.generate(entity.entity_type, entity.original)
+                          @synthetic.generate(entity.entity_type, entity.original, counters: vault)
                         else
-                          @synthetic.placeholder(entity.entity_type)
+                          @synthetic.placeholder(entity.entity_type, vault)
                         end
           entity.replacement = vault.add(entity.original, replacement)
         end

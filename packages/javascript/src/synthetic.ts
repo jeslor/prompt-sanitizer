@@ -21,26 +21,40 @@ async function _getFaker(): Promise<any> {
   }
 }
 
+/**
+ * Anything that can hand out the next placeholder index for an entity type.
+ * `Vault` satisfies this structurally — passing a vault into `generate()`
+ * scopes counters to that vault/session instead of this engine instance,
+ * which is what makes a vault's state fully self-contained and safe to
+ * persist/restore independently of other sessions.
+ */
+export interface CounterSource {
+  nextCount(entityType: string): number;
+}
+
 /** Counter per entity type within a single engine instance. */
 export class SyntheticEngine {
+  // Fallback counters, used only when no CounterSource (vault) is passed to
+  // generate() — kept for direct/standalone callers of SyntheticEngine.
   private readonly _counters = new Map<EntityType, number>();
 
-  private _next(type: EntityType): number {
+  private _next(type: EntityType, counters?: CounterSource): number {
+    if (counters) return counters.nextCount(type);
     const n = (this._counters.get(type) ?? 0) + 1;
     this._counters.set(type, n);
     return n;
   }
 
-  private _placeholder(type: EntityType): string {
-    return `[${type}_${this._next(type)}]`;
+  private _placeholder(type: EntityType, counters?: CounterSource): string {
+    return `[${type}_${this._next(type, counters)}]`;
   }
 
   /** Generate a fake replacement for the given entity type. */
-  async generate(type: EntityType): Promise<string> {
+  async generate(type: EntityType, counters?: CounterSource): Promise<string> {
     const faker = await _getFaker();
-    if (!faker) return this._placeholder(type);
+    if (!faker) return this._placeholder(type, counters);
 
-    const n = this._next(type);
+    const n = this._next(type, counters);
     // Store counter before async ops so we can use it in sync fallbacks
     switch (type) {
       case EntityType.EMAIL:

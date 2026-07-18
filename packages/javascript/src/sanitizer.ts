@@ -13,6 +13,7 @@ import { SyntheticEngine } from "./synthetic.js";
 import { Vault } from "./vault.js";
 import { Mode } from "./modes.js";
 import { Session } from "./session.js";
+import type { SessionStoreOptions } from "./session.js";
 import { AuditLog, _hashValue, _nowIso } from "./audit.js";
 import type { DetectedEntity, SanitizeResult } from "./result.js";
 
@@ -166,9 +167,20 @@ export class Sanitizer {
   /**
    * Create a {@link Session} for multi-turn anonymize/deanonymize workflows.
    * The session maintains a shared vault so tokens are consistent across calls.
+   *
+   * Pass `{ store }` to reattach to a previously-persisted vault by
+   * `sessionId` — this overload is async since loading from the store
+   * must complete before the returned Session is safe to use.
    */
-  session(sessionId?: string): Session {
-    return new Session(this, sessionId);
+  session(sessionId?: string): Session;
+  session(sessionId: string, options: SessionStoreOptions): Promise<Session>;
+  session(
+    sessionId?: string,
+    options?: SessionStoreOptions,
+  ): Session | Promise<Session> {
+    const sess = new Session(this, sessionId, options);
+    if (!options) return sess;
+    return sess._hydrate().then(() => sess);
   }
 
   /**
@@ -268,8 +280,19 @@ export class Sanitizer {
     for (const entity of [...entities].reverse()) {
       let replacement = vault.getReplacement(entity.value);
       if (!replacement) {
-        replacement = await this._syntheticEngine.generate(entity.entityType);
-        vault.add(entity.value, replacement);
+        // Double-checked lock: re-verify inside the lock in case a
+        // concurrent call already registered this value while we were
+        // generating/waiting, then use add()'s return value as the
+        // canonical replacement (it wins any dedup race).
+        replacement = await vault.withLock(async () => {
+          const existing = vault.getReplacement(entity.value);
+          if (existing) return existing;
+          const generated = await this._syntheticEngine.generate(
+            entity.entityType,
+            vault,
+          );
+          return vault.add(entity.value, generated);
+        });
       }
       tokens[entity.value] = replacement;
       result =

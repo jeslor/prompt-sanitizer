@@ -25,6 +25,15 @@ PromptSanitizer.configure do |config|
   # PromptSanitizer::Audit::Base). When nil, a MemoryAuditLog is used
   # automatically in :full mode.
   # config.audit_log = MyActiveRecordAuditLog.new
+
+  # Default vault persistence used by Sanitizer#session when no explicit
+  # store: is passed — lets a session be reattached by session_id, e.g.
+  # after a worker restart. :memory (default) only survives within this
+  # process; pass an instance for real persistence (must inherit from
+  # PromptSanitizer::VaultStore::Base).
+  # config.vault_store = :memory
+  # config.vault_store = PromptSanitizer::VaultStore::FileVaultStore.new(Rails.root.join("tmp/vault"))
+  # config.vault_store = MyActiveRecordVaultStore.new
 end
 
 # ── Optional: Rack middleware ──────────────────────────────────────────────────

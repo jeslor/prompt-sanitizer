@@ -25,14 +25,28 @@ Decorator guard::
 
 from .audit import AuditEvent, BaseAuditLog, MemoryAuditLog, SQLiteAuditLog
 from .entities import EntityType
-from .exceptions import MissingDependencyError, PIIDetectedError
+from .exceptions import (
+    MissingDependencyError,
+    PIIDetectedError,
+    VaultCollisionError,
+    VaultStoreError,
+)
 from .modes import Mode
 from .result import DetectedEntity, SanitizeResult
 from .sanitizer import Sanitizer
 from .session import Session
 from .vault import Vault
+from .vault_store import (
+    VAULT_SNAPSHOT_VERSION,
+    BaseVaultStore,
+    MemoryVaultStore,
+    SQLiteVaultStore,
+    VaultSnapshot,
+    assert_supported_version,
+    to_vault_snapshot,
+)
 
-__version__ = "0.1.0"
+__version__ = "1.1.0"
 __all__ = [
     "Sanitizer",
     "Session",
@@ -43,6 +57,15 @@ __all__ = [
     "Vault",
     "PIIDetectedError",
     "MissingDependencyError",
+    "VaultCollisionError",
+    "VaultStoreError",
+    "BaseVaultStore",
+    "MemoryVaultStore",
+    "SQLiteVaultStore",
+    "VaultSnapshot",
+    "VAULT_SNAPSHOT_VERSION",
+    "to_vault_snapshot",
+    "assert_supported_version",
     "BaseAuditLog",
     "MemoryAuditLog",
     "SQLiteAuditLog",

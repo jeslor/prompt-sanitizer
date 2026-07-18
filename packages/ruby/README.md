@@ -121,6 +121,23 @@ sanitizer.session do |s|
 end
 ```
 
+### Persisting sessions across restarts
+
+By default a session's vault lives only in process memory. Pass `store:` to reattach to the same mapping later by `session_id` — e.g. after a Puma worker restart:
+
+```ruby
+store   = PromptSanitizer::VaultStore::FileVaultStore.new(Rails.root.join("tmp/vault"))
+session = sanitizer.session(session_id: "user-42", store: store)
+clean   = session.anonymize(user_prompt)
+session.persist
+
+# ...later, possibly in a new process:
+resumed = sanitizer.session(session_id: "user-42", store: store)
+final_reply = resumed.deanonymize(llm_reply)
+```
+
+`MemoryVaultStore` is the zero-dependency, same-process reference store; `FileVaultStore` persists one JSON file per session (stdlib only). Pass `auto_persist: true` to persist automatically after every `#anonymize` call instead of calling `#persist` yourself. Configure a default store for every session via `PromptSanitizer.configure { |c| c.vault_store = ... }` — see the Rails initializer template. No store is active unless one is configured.
+
 ---
 
 ## Rails integration

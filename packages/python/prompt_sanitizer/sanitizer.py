@@ -7,7 +7,7 @@ synthetic replacement, vault, and audit log.
 from __future__ import annotations
 
 import re
-from typing import AsyncGenerator, AsyncIterable, Callable
+from typing import TYPE_CHECKING, AsyncGenerator, AsyncIterable, Callable
 
 from .audit import AuditEvent, BaseAuditLog, MemoryAuditLog, _hash_value, _now_iso
 from .engines.ner_engine import NEREngine
@@ -19,6 +19,10 @@ from .modes import Mode
 from .result import DetectedEntity, SanitizeResult
 from .synthetic import SyntheticEngine
 from .vault import Vault
+
+if TYPE_CHECKING:
+    from .session import Session
+    from .vault_store import BaseVaultStore
 
 
 # ---------------------------------------------------------------------------
@@ -142,16 +146,25 @@ class Sanitizer:
         """Sanitize a list of texts.  Each text gets its own vault."""
         return [self.sanitize(t, session_id=session_id) for t in texts]
 
-    def session(self, session_id: str | None = None) -> "Session":
+    def session(
+        self,
+        session_id: str | None = None,
+        store: "BaseVaultStore | None" = None,
+        auto_persist: bool = False,
+    ) -> "Session":
         """
         Create a :class:`Session` for multi-turn anonymize/deanonymize workflows.
 
         The session maintains a shared vault so that the same PII value is
         always replaced with the same token, and LLM responses can be
         deanonymized back to the originals.
+
+        Pass *store* (with *session_id*) to reattach to a previously
+        persisted vault — any existing snapshot is loaded synchronously
+        before this method returns.
         """
         from .session import Session
-        return Session(self, session_id=session_id)
+        return Session(self, session_id=session_id, store=store, auto_persist=auto_persist)
 
     def add_entity(
         self,
@@ -327,7 +340,7 @@ class Sanitizer:
             if existing:
                 entity.replacement = existing
             else:
-                fake = self._synthetic.generate(entity.entity_type, entity.original)
+                fake = self._synthetic.generate(entity.entity_type, entity.original, counters=vault)
                 entity.replacement = vault.add(entity.original, fake)
 
         # 6. Reconstruct text right-to-left to preserve offsets

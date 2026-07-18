@@ -22,3 +22,38 @@ export class MissingDependencyError extends Error {
     Object.setPrototypeOf(this, MissingDependencyError.prototype);
   }
 }
+
+/**
+ * Raised when a replacement token already maps to a *different* original
+ * value. This should only happen if a Vault was hydrated from a persisted
+ * snapshot without correctly restoring/reconciling its counters — it is
+ * a loud failure by design, since silently overwriting the mapping would
+ * make an old placeholder deanonymize to the wrong value.
+ */
+export class VaultCollisionError extends Error {
+  public readonly replacement: string;
+  public readonly existingOriginal: string;
+  public readonly incomingOriginal: string;
+
+  constructor(replacement: string, existingOriginal: string, incomingOriginal: string) {
+    super(
+      `Replacement token "${replacement}" is already mapped to a different ` +
+        `original value. This usually means a Vault's counters were not ` +
+        `restored correctly from a persisted snapshot.`
+    );
+    this.name = "VaultCollisionError";
+    this.replacement = replacement;
+    this.existingOriginal = existingOriginal;
+    this.incomingOriginal = incomingOriginal;
+    Object.setPrototypeOf(this, VaultCollisionError.prototype);
+  }
+}
+
+/** Raised when a VaultStore load/save/delete fails, or a snapshot's version is unsupported. */
+export class VaultStoreError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "VaultStoreError";
+    Object.setPrototypeOf(this, VaultStoreError.prototype);
+  }
+}

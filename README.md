@@ -396,6 +396,65 @@ LLM output:   "I've drafted a reply to [PERSON_1] at [EMAIL_1]"
 Deanonymized: "I've drafted a reply to Alice at alice@example.com"
 ````
 
+### Surviving process restarts (persisted sessions)
+
+By default a session's vault lives only in process memory — fine for a
+single long-running process, but gone on a worker restart, redeploy, or
+serverless cold start. Pass a `VaultStore` to reattach to the same mapping
+later by `sessionId`/`session_id`:
+
+```ts
+// TypeScript
+import { FileVaultStore } from "prompt-sanitizer";
+
+const store = new FileVaultStore("./vault-data");
+const session = await sanitizer.session("user-42", { store });
+const clean = await session.anonymize(userPrompt);
+await session.persist();
+
+// ...later, possibly in a new process:
+const resumed = await sanitizer.session("user-42", { store });
+const final = resumed.deanonymize(llmReply);
+```
+
+```python
+# Python
+from prompt_sanitizer import SQLiteVaultStore
+
+store = SQLiteVaultStore("./vault.db")
+session = sanitizer.session(session_id="user-42", store=store)
+clean = session.anonymize(user_prompt)
+session.persist()
+
+# ...later, possibly in a new process:
+resumed = sanitizer.session(session_id="user-42", store=store)
+final = resumed.deanonymize(llm_reply)
+```
+
+```ruby
+# Ruby
+store = PromptSanitizer::VaultStore::FileVaultStore.new("./vault-data")
+session = sanitizer.session(session_id: "user-42", store: store)
+clean = session.anonymize(user_prompt)
+session.persist
+
+# ...later, possibly in a new process:
+resumed = sanitizer.session(session_id: "user-42", store: store)
+final = resumed.deanonymize(llm_reply)
+```
+
+No store is active unless you pass one — this is opt-in and changes
+nothing for existing callers. Each vault owns its own placeholder counters
+(the "1" in `[PERSON_1]`), so a reattached session can never reuse a token
+that already means something else, even after a restart. The bundled
+stores (`InMemoryVaultStore`/`FileVaultStore` in JS, `MemoryVaultStore`/
+`SQLiteVaultStore` in Python, `MemoryVaultStore`/`FileVaultStore` in Ruby)
+write the *actual original values* — treat the underlying file/db with the
+same sensitivity as the source PII. For multi-server production
+deployments, implement the store interface (`load`/`save`/`delete`,
+three methods) against infrastructure you already run, e.g. Redis or
+Postgres.
+
 ---
 
 ## Supported PII types

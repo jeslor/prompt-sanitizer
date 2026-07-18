@@ -219,6 +219,25 @@ print(vault.reverse("alice@example.com"))
 vault.clear()
 ```
 
+### Persisting sessions across restarts
+
+By default a session's vault lives only in process memory. Pass `store=` to reattach to the same mapping later by `session_id` — e.g. after a worker restart:
+
+```python
+from prompt_sanitizer import SQLiteVaultStore
+
+store = SQLiteVaultStore("./vault.db")
+session = s.session(session_id="support-chat-001", store=store)
+clean_prompt = session.anonymize("My name is Elena Ruiz and my email is elena@company.com")
+session.persist()
+
+# ...later, possibly in a new process:
+resumed = s.session(session_id="support-chat-001", store=store)
+final_reply = resumed.deanonymize(llm_reply)
+```
+
+`MemoryVaultStore` is the zero-dependency, same-process reference store; `SQLiteVaultStore` persists to a local SQLite file (stdlib only). Pass `auto_persist=True` to persist automatically after every `anonymize()` call instead of calling `persist()` yourself. No store is active unless you pass one.
+
 ## Custom entities
 
 Use `add_entity()` for internal identifiers, tenant-specific secrets, or domain-specific formats.

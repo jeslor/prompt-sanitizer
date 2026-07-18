@@ -21,6 +21,31 @@ module PromptSanitizer
     end
   end
 
+  # Raised when a replacement token already maps to a *different* original
+  # value inside a Vault.
+  #
+  # This should only happen if a vault was hydrated from a persisted
+  # snapshot without correctly restoring/reconciling its counters. It is
+  # a loud failure by design: silently overwriting the mapping would make
+  # an old placeholder deanonymize to the wrong value.
+  class VaultCollisionError < Error
+    attr_reader :replacement, :existing_original, :incoming_original
+
+    def initialize(replacement, existing_original, incoming_original)
+      @replacement       = replacement
+      @existing_original = existing_original
+      @incoming_original = incoming_original
+      super(
+        "Replacement token #{replacement.inspect} is already mapped to a different " \
+        "original value. This usually means a Vault's counters were not " \
+        "restored correctly from a persisted snapshot."
+      )
+    end
+  end
+
+  # Raised when a VaultStore load/save/delete fails, or a snapshot's version is unsupported.
+  class VaultStoreError < Error; end
+
   # ── Configuration ──────────────────────────────────────────────────────────
 
   class Configuration
@@ -74,7 +99,8 @@ module PromptSanitizer
         ner_backend: configuration.ner_backend,
         ner_model:   configuration.ner_model,
         audit_log:   configuration.audit_log,
-        locale:      configuration.locale
+        locale:      configuration.locale,
+        vault_store: _resolve_vault_store(configuration.vault_store)
       )
     end
 
@@ -82,6 +108,24 @@ module PromptSanitizer
     def reset!
       @configuration = nil
       @sanitizer     = nil
+    end
+
+    private
+
+    # Resolves Configuration#vault_store into a VaultStore::Base instance.
+    # Accepts a pre-built instance directly (duck-typed, same convention as
+    # audit_log), or the built-in :memory symbol. :rails_cache /
+    # :active_record are documented for future Rails-side backends but have
+    # no built-in resolution yet — pass an instance for those today.
+    def _resolve_vault_store(value)
+      case value
+      when :memory
+        VaultStore::MemoryVaultStore.new
+      when :none, nil
+        nil
+      else
+        value
+      end
     end
   end
 end
@@ -92,6 +136,9 @@ require_relative "prompt_sanitizer/entities"
 require_relative "prompt_sanitizer/modes"
 require_relative "prompt_sanitizer/result"
 require_relative "prompt_sanitizer/vault"
+require_relative "prompt_sanitizer/vault_store/base"
+require_relative "prompt_sanitizer/vault_store/memory_vault_store"
+require_relative "prompt_sanitizer/vault_store/file_vault_store"
 require_relative "prompt_sanitizer/engines/regex_engine"
 require_relative "prompt_sanitizer/engines/secrets_engine"
 require_relative "prompt_sanitizer/engines/ner_engine"

@@ -11,8 +11,16 @@ to the same fake value (determinism).
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Optional, Protocol
 
 from .entities import EntityType
+
+
+class CounterSource(Protocol):
+    """Anything that can hand out the next placeholder index for an entity type."""
+
+    def next_count(self, entity_type: str) -> int: ...
+
 
 try:
     from faker import Faker as _Faker  # type: ignore[import]
@@ -35,20 +43,28 @@ class SyntheticEngine:
     def __init__(self, locale: str = "en_US") -> None:
         self._locale = locale
         self._fake = _Faker(locale) if _HAS_FAKER else None
-        # Per-type counters for placeholder fallback
+        # Fallback counters, used only when no CounterSource (vault) is
+        # passed to generate() — kept for direct/standalone callers.
         self._counters: dict[EntityType, int] = defaultdict(int)
 
     # ── Public ───────────────────────────────────────────────────────────────
 
-    def generate(self, entity_type: EntityType, original: str = "") -> str:
+    def generate(
+        self,
+        entity_type: EntityType,
+        original: str = "",
+        counters: Optional[CounterSource] = None,
+    ) -> str:
         """Return a fake value for *entity_type*."""
         if self._fake is not None:
-            return self._faker_value(entity_type, original)
-        return self._placeholder(entity_type)
+            return self._faker_value(entity_type, original, counters)
+        return self._placeholder(entity_type, counters)
 
     # ── Faker-backed generation ───────────────────────────────────────────────
 
-    def _faker_value(self, entity_type: EntityType, original: str) -> str:
+    def _faker_value(
+        self, entity_type: EntityType, original: str, counters: Optional[CounterSource] = None
+    ) -> str:
         f = self._fake
         assert f is not None
 
@@ -107,13 +123,17 @@ class SyntheticEngine:
             case EntityType.DB_CONNECTION:
                 return f"postgresql://user:password@localhost:5432/{f.word()}"
             case _:
-                return self._placeholder(entity_type)
+                return self._placeholder(entity_type, counters)
 
     # ── Placeholder fallback (no Faker) ──────────────────────────────────────
 
-    def _placeholder(self, entity_type: EntityType) -> str:
-        self._counters[entity_type] += 1
-        return f"[{entity_type.value}_{self._counters[entity_type]}]"
+    def _placeholder(self, entity_type: EntityType, counters: Optional[CounterSource] = None) -> str:
+        if counters is not None:
+            n = counters.next_count(entity_type.value)
+        else:
+            self._counters[entity_type] += 1
+            n = self._counters[entity_type]
+        return f"[{entity_type.value}_{n}]"
 
 
 # ---------------------------------------------------------------------------

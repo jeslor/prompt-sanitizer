@@ -30,6 +30,8 @@ module PromptSanitizer
     # @param locale [String] BCP-47 locale tag forwarded to Faker (e.g. "en", "fr", "de")
     def initialize(locale: "en")
       @locale   = locale
+      # Fallback counters, used only when no counter source (vault) is
+      # passed in — kept for direct/standalone callers of this engine.
       @counters = Hash.new(0) # entity_type Symbol → Integer
       if HAS_FAKER
         Faker::Config.locale = locale
@@ -40,20 +42,26 @@ module PromptSanitizer
     #
     # @param entity_type [Symbol]  one of the EntityType constants
     # @param _original   [String]  original text (unused here; determinism via Vault)
+    # @param counters [#next_count, nil]  counter source (typically the active Vault);
+    #   scopes placeholder numbering to that vault instead of this engine instance.
     # @return [String]
-    def generate(entity_type, _original = "")
+    def generate(entity_type, _original = "", counters: nil)
       if HAS_FAKER
-        faker_value(entity_type)
+        faker_value(entity_type, counters)
       else
-        placeholder(entity_type)
+        placeholder(entity_type, counters)
       end
     end
 
     # Force a placeholder token regardless of faker availability.
     # Used by Session when the replacement must survive round-trips.
-    def placeholder(entity_type)
-      @counters[entity_type] += 1
-      "[#{entity_type.to_s.upcase}_#{@counters[entity_type]}]"
+    def placeholder(entity_type, counters = nil)
+      n = if counters
+            counters.next_count(entity_type)
+          else
+            @counters[entity_type] += 1
+          end
+      "[#{entity_type.to_s.upcase}_#{n}]"
     end
 
     def reset!
@@ -63,7 +71,7 @@ module PromptSanitizer
     private
 
     # rubocop:disable Metrics/MethodLength, Metrics/CyclomaticComplexity
-    def faker_value(entity_type) # rubocop:disable Metrics/AbcSize
+    def faker_value(entity_type, counters = nil) # rubocop:disable Metrics/AbcSize
       case entity_type
       when :person
         Faker::Name.name
@@ -120,9 +128,9 @@ module PromptSanitizer
       when :db_connection, :database_url
         "postgresql://user:password@localhost:5432/#{Faker::Lorem.word}"
       when :secret_key, :password
-        placeholder(entity_type)
+        placeholder(entity_type, counters)
       else
-        placeholder(entity_type)
+        placeholder(entity_type, counters)
       end
     end
     # rubocop:enable Metrics/MethodLength, Metrics/CyclomaticComplexity

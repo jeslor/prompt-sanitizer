@@ -21,15 +21,35 @@ module PromptSanitizer
   #   sess = sanitizer.session
   #   loop { sess.anonymize(...) ... }
   #   sess.reset
+  #
+  # By default a session's vault lives only in process memory. Pass +store:+
+  # (see PromptSanitizer::VaultStore) to reattach to the same mapping later
+  # — e.g. after a process restart — by session_id:
+  #
+  #   store = PromptSanitizer::VaultStore::FileVaultStore.new("./vault-data")
+  #   sess  = sanitizer.session(session_id: "user-42", store: store)
+  #   clean = sess.anonymize(user_prompt)
+  #   sess.persist
+  #   # ...later, possibly in a new process:
+  #   resumed = sanitizer.session(session_id: "user-42", store: store)
+  #   final   = resumed.deanonymize(llm_reply)
   class Session
     attr_reader :session_id, :vault
 
     # @param sanitizer  [Sanitizer]
     # @param session_id [String, nil]
-    def initialize(sanitizer, session_id: nil)
-      @sanitizer  = sanitizer
-      @session_id = session_id
-      @vault      = Vault.new
+    # @param store [VaultStore::Base, nil] if given (with session_id), any
+    #   previously-persisted vault for this session is loaded synchronously
+    #   before the session is returned to the caller.
+    # @param auto_persist [Boolean] if true, persist to +store+ at the end
+    #   of every #anonymize call. Default false — call #persist explicitly.
+    def initialize(sanitizer, session_id: nil, store: nil, auto_persist: false)
+      @sanitizer    = sanitizer
+      @session_id   = session_id
+      @vault        = Vault.new
+      @store        = store
+      @auto_persist = auto_persist
+      _hydrate
     end
 
     # Sanitize +text+ using the session's shared vault.
@@ -38,7 +58,9 @@ module PromptSanitizer
     # @param text [String]
     # @return [String]
     def anonymize(text)
-      @sanitizer._run(text, @vault, session_id: @session_id).text
+      result = @sanitizer._run(text, @vault, session_id: @session_id).text
+      persist if @auto_persist
+      result
     end
 
     # Like #anonymize but returns the full SanitizeResult.
@@ -46,7 +68,33 @@ module PromptSanitizer
     # @param text [String]
     # @return [SanitizeResult]
     def anonymize_with_result(text)
-      @sanitizer._run(text, @vault, session_id: @session_id)
+      result = @sanitizer._run(text, @vault, session_id: @session_id)
+      persist if @auto_persist
+      result
+    end
+
+    # Persists the current vault state to this session's store.
+    #
+    # @raise [VaultStoreError] if this session wasn't created with both a
+    #   session_id and a store.
+    def persist
+      unless @store && @session_id
+        raise VaultStoreError,
+              "Session#persist requires both session_id and store to have " \
+              "been passed to Sanitizer#session."
+      end
+
+      @store.save(@session_id, VaultStore.to_snapshot(@session_id, @vault.to_data))
+      nil
+    end
+
+    # Deletes this session's persisted snapshot from its store, if any.
+    # Does not clear the in-memory vault — call #reset for that too.
+    def forget
+      return unless @store && @session_id
+
+      @store.delete(@session_id)
+      nil
     end
 
     # Restore vault tokens in +text+ back to the original PII values.
@@ -93,5 +141,17 @@ module PromptSanitizer
       "#<PromptSanitizer::Session id=#{@session_id.inspect} mappings=#{size}>"
     end
     alias to_s inspect
+
+    private
+
+    def _hydrate
+      return unless @store && @session_id
+
+      snapshot = @store.load(@session_id)
+      return unless snapshot
+
+      VaultStore.assert_supported_version!(snapshot)
+      @vault.hydrate(mappings: snapshot.mappings, counters: snapshot.counters)
+    end
   end
 end
